@@ -1,0 +1,12 @@
+# BingeWatch Requirements
+# No external libraries required for Phase 1-2!
+# Only Python standard library is used:
+# - sqlite3 (database)
+# - urllib (HTTP requests)
+# - html.parser (HTML parsing)
+# - logging (logging)
+# - dataclasses (data models)
+
+# For development/testing (optional):
+# pytest>=7.4.0
+# pytest-cov>=4.1.0
