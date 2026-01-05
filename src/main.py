@@ -14,6 +14,7 @@ from .commands.update_command import UpdateCommand
 from .commands.list_command import ListCommand
 from .commands.watchlist_command import WatchlistCommand
 from .commands.trailers_command import TrailersCommand
+from .commands.check_command import CheckCommand
 from .utils.logger import get_logger
 
 
@@ -42,6 +43,7 @@ class CommandFactory:
             'wl': WatchlistCommand(self.db_manager),  # Alias
             'trailers': TrailersCommand(self.db_manager),
             'tr': TrailersCommand(self.db_manager),  # Alias
+            'check': CheckCommand(self.db_manager),
         }
     
     def get_command(self, command_name: str) -> Command:
@@ -99,6 +101,7 @@ Available Commands:
   list      List all tracked series
   watchlist Show prioritized episodes to watch (ranked by score)
   trailers  Find YouTube trailers for episodes
+  check     Scan for NEW videos (only shows new discoveries)
   help      Show this help message
   exit      Exit the application
 
@@ -109,6 +112,7 @@ Examples:
   list --check-episodes
   watchlist --top 10
   trailers tt0903747 S01E04
+  check
   update score tt0903747 10
         """
         print(help_text)
