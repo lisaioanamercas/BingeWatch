@@ -7,6 +7,7 @@ from .add_command import AddCommand
 from .delete_command import DeleteCommand
 from .update_command import UpdateCommand
 from .list_command import ListCommand
+from .watchlist_command import WatchlistCommand
 
 __all__ = [
     'Command',
@@ -14,4 +15,5 @@ __all__ = [
     'DeleteCommand',
     'UpdateCommand',
     'ListCommand',
+    'WatchlistCommand',
 ]
