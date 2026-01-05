@@ -8,6 +8,7 @@ from .delete_command import DeleteCommand
 from .update_command import UpdateCommand
 from .list_command import ListCommand
 from .watchlist_command import WatchlistCommand
+from .trailers_command import TrailersCommand
 
 __all__ = [
     'Command',
@@ -16,4 +17,5 @@ __all__ = [
     'UpdateCommand',
     'ListCommand',
     'WatchlistCommand',
+    'TrailersCommand',
 ]

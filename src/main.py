@@ -13,6 +13,7 @@ from .commands.delete_command import DeleteCommand
 from .commands.update_command import UpdateCommand
 from .commands.list_command import ListCommand
 from .commands.watchlist_command import WatchlistCommand
+from .commands.trailers_command import TrailersCommand
 from .utils.logger import get_logger
 
 
@@ -39,6 +40,8 @@ class CommandFactory:
             'ls': ListCommand(self.db_manager),  # Alias
             'watchlist': WatchlistCommand(self.db_manager),
             'wl': WatchlistCommand(self.db_manager),  # Alias
+            'trailers': TrailersCommand(self.db_manager),
+            'tr': TrailersCommand(self.db_manager),  # Alias
         }
     
     def get_command(self, command_name: str) -> Command:
@@ -95,6 +98,7 @@ Available Commands:
   update    Update series properties (score, snooze, episode)
   list      List all tracked series
   watchlist Show prioritized episodes to watch (ranked by score)
+  trailers  Find YouTube trailers for episodes
   help      Show this help message
   exit      Exit the application
 
@@ -104,6 +108,7 @@ Examples:
   add "Breaking Bad" tt0903747 9
   list --check-episodes
   watchlist --top 10
+  trailers tt0903747 S01E04
   update score tt0903747 10
         """
         print(help_text)
