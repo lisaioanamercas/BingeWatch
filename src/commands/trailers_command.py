@@ -85,15 +85,27 @@ class TrailersCommand(Command):
             
             # Handle specific episode or series
             if len(positional) >= 2:
-                # Episode-specific: trailers tt0903747 S01E04
-                imdb_id = positional[0]
+                # Episode-specific: trailers "Breaking Bad" S01E04 or trailers tt0903747 S01E04
+                identifier = positional[0]
                 episode_code = positional[1]
-                return self._search_for_episode(imdb_id, episode_code, count)
+                
+                # Resolve series by name or IMDB ID
+                series, error = self.resolve_series(identifier)
+                if error:
+                    return self.error_msg(error)
+                
+                return self._search_for_episode(series, episode_code, count)
             
             elif len(positional) == 1:
-                # Series-general: trailers tt0903747
-                imdb_id = positional[0]
-                return self._search_for_series(imdb_id, count)
+                # Series-general: trailers "Breaking Bad" or trailers tt0903747
+                identifier = positional[0]
+                
+                # Resolve series by name or IMDB ID
+                series, error = self.resolve_series(identifier)
+                if error:
+                    return self.error_msg(error)
+                
+                return self._search_for_series(series, count)
             
             else:
                 # No arguments - show help
@@ -116,22 +128,18 @@ class TrailersCommand(Command):
                     pass
         return None
     
-    def _search_for_episode(self, imdb_id: str, episode_code: str, count: int) -> str:
+    def _search_for_episode(self, series, episode_code: str, count: int) -> str:
         """
         Search for videos related to a specific episode.
         
         Args:
-            imdb_id: IMDB ID of the series
+            series: Series object
             episode_code: Episode code (e.g., S01E04)
             count: Number of results
             
         Returns:
             Formatted results string
         """
-        # Get series info from database
-        series = self.db_manager.get_series(imdb_id)
-        if not series:
-            return f"✗ Series with IMDB ID '{imdb_id}' not found in database.\n  Use 'add' command first."
         
         lines = [
             "═" * 60,
@@ -167,21 +175,17 @@ class TrailersCommand(Command):
         lines.append("═" * 60)
         return "\n".join(lines)
     
-    def _search_for_series(self, imdb_id: str, count: int) -> str:
+    def _search_for_series(self, series, count: int) -> str:
         """
         Search for general series trailers.
         
         Args:
-            imdb_id: IMDB ID of the series
+            series: Series object
             count: Number of results
             
         Returns:
             Formatted results string
         """
-        # Get series info from database
-        series = self.db_manager.get_series(imdb_id)
-        if not series:
-            return f"✗ Series with IMDB ID '{imdb_id}' not found in database.\n  Use 'add' command first."
         
         lines = [
             "═" * 60,
@@ -270,13 +274,13 @@ class TrailersCommand(Command):
     
     def get_help(self):
         """Return help text for trailers command."""
-        return """
+        return '''
 Search YouTube for trailers and clips related to your series.
 
-Usage: trailers [options] [imdb_id] [episode_code]
+Usage: trailers [options] <series> [episode_code]
 
 Arguments:
-  imdb_id        IMDB ID of the series (e.g., tt0903747)
+  series         Series name (in quotes) or IMDB ID
   episode_code   Episode code (e.g., S01E04)
 
 Options:
@@ -284,10 +288,10 @@ Options:
   --count N, -c N       Number of results (default: 5)
 
 Examples:
-  trailers tt0903747 S01E04    Find trailers for specific episode
-  trailers tt0903747           Find general series trailers
-  trailers --next              Trailers for next episode to watch
-  trailers -n -c 10            Next episode trailers, 10 results
+  trailers "Breaking Bad" S01E04    Find trailers for specific episode
+  trailers tt0903747 S01E04         Same, using IMDB ID
+  trailers "Game of Thrones"        Find general series trailers
+  trailers --next                   Trailers for next episode to watch
 
 Output includes video title, channel, and YouTube URL.
-        """
+        '''
