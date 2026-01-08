@@ -3,13 +3,10 @@ Delete command implementation.
 Handles removing series from the database.
 
 Phase 6 Enhancement: Detailed operation logging.
+Phase 7 Enhancement: Name-based series lookup.
 """
 
 from .base import Command
-from ..utils.validators import (
-    validate_imdb_link,
-    ValidationError
-)
 
 
 class DeleteCommand(Command):
@@ -20,7 +17,7 @@ class DeleteCommand(Command):
         Delete a series from the database.
         
         Args:
-            args: List containing [imdb_id_or_link]
+            args: List containing [name_or_imdb_id]
             
         Returns:
             str: Success or failure message
@@ -30,50 +27,35 @@ class DeleteCommand(Command):
                 # Validate argument count
                 if len(args) < 1:
                     return (
-                        self.error_msg("Missing IMDB ID") + "\n\n"
-                        "Usage: delete <imdb_id_or_link>\n\n"
-                        "Example:\n"
+                        self.error_msg("Missing series identifier") + "\n\n"
+                        "Usage: delete <name_or_imdb_id>\n\n"
+                        "Examples:\n"
+                        '  delete "Breaking Bad"\n'
                         "  delete tt0903747"
                     )
                 
-                # Parse and validate IMDB ID
-                imdb_link = args[0]
-                validated_imdb_id = validate_imdb_link(imdb_link)
+                # Resolve series by name or IMDB ID
+                identifier = args[0]
+                series, error = self.resolve_series(identifier)
+                if error:
+                    return self.error_msg(error)
                 
-                op.debug(f"Looking up series: {validated_imdb_id}")
-                
-                # Get series info before deleting (for confirmation message)
-                series = self.db_manager.get_series(validated_imdb_id)
-                if not series:
-                    return (
-                        self.error_msg(f"Series with IMDB ID '{validated_imdb_id}' not found") + "\n\n"
-                        "Use 'list' to see your tracked series"
-                    )
-                
-                op.debug(f"Deleting: {series.name}")
+                op.debug(f"Deleting: {series.name} ({series.imdb_id})")
                 
                 # Delete from database
-                deleted = self.db_manager.delete_series(validated_imdb_id)
+                deleted = self.db_manager.delete_series(series.imdb_id)
                 
                 if deleted:
                     op.success(f"Deleted '{series.name}'")
                     return (
                         self.success_msg("Successfully deleted series:") + "\n"
                         f"  Name:     {series.name}\n"
-                        f"  IMDB ID:  {validated_imdb_id}\n\n"
+                        f"  IMDB ID:  {series.imdb_id}\n\n"
                         "ℹ The series has been removed from your tracking list."
                     )
                 else:
-                    op.error(f"Database error for {validated_imdb_id}")
-                    return self.error_msg(f"Failed to delete series {validated_imdb_id}")
-            
-            except ValidationError as e:
-                op.error(str(e))
-                return (
-                    self.error_msg(f"Invalid IMDB ID: {e}") + "\n\n"
-                    "The IMDB ID should look like: tt0903747\n"
-                    "You can also use the full URL: imdb.com/title/tt0903747/"
-                )
+                    op.error(f"Database error for {series.imdb_id}")
+                    return self.error_msg(f"Failed to delete series {series.imdb_id}")
             
             except Exception as e:
                 op.error(str(e))
@@ -81,15 +63,16 @@ class DeleteCommand(Command):
     
     def get_help(self):
         """Return help text for delete command."""
-        return """
+        return '''
 Delete a series from tracking.
 
-Usage: delete <imdb_id_or_link>
+Usage: delete <series>
 
 Arguments:
-  imdb_id_or_link   IMDB ID (e.g., tt0903747) or full IMDB URL
+  series    Series name (in quotes) or IMDB ID
 
 Examples:
+  delete "Breaking Bad"
   delete tt0903747
-  delete https://www.imdb.com/title/tt0306414/
-        """
+  delete "Game of Thrones"
+        '''

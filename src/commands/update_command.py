@@ -7,7 +7,6 @@ Phase 6 Enhancement: Detailed operation logging.
 
 from .base import Command
 from ..utils.validators import (
-    validate_imdb_link,
     validate_score,
     validate_episode_format,
     ValidationError
@@ -33,30 +32,26 @@ class UpdateCommand(Command):
                 if len(args) < 2:
                     return (
                         self.error_msg("Missing required arguments") + "\n\n"
-                        "Usage: update <action> <imdb_id_or_link> [value]\n\n"
+                        "Usage: update <action> <name_or_imdb_id> [value]\n\n"
                         "Actions:\n"
-                        "  score <id> <1-10>     Update rating\n"
-                        "  snooze <id>           Pause notifications\n"
-                        "  unsnooze <id>         Resume notifications\n"
-                        "  episode <id> <S01E01> Mark episode as watched"
+                        "  score <series> <1-10>     Update rating\n"
+                        "  snooze <series>           Pause notifications\n"
+                        "  unsnooze <series>         Resume notifications\n"
+                        "  episode <series> <S01E01> Mark episode as watched\n\n"
+                        "Examples:\n"
+                        '  update score "Breaking Bad" 10\n'
+                        "  update snooze tt0903747"
                     )
                 
                 action = args[0].lower()
-                imdb_link = args[1]
+                identifier = args[1]
                 
-                # Validate IMDB ID
-                validated_imdb_id = validate_imdb_link(imdb_link)
+                # Resolve series by name or IMDB ID
+                series, error = self.resolve_series(identifier)
+                if error:
+                    return self.error_msg(error)
                 
-                op.debug(f"Action: {action}, IMDB: {validated_imdb_id}")
-                
-                # Check if series exists
-                series = self.db_manager.get_series(validated_imdb_id)
-                if not series:
-                    return (
-                        self.error_msg(f"Series with IMDB ID '{validated_imdb_id}' not found") + "\n\n"
-                        "Use 'list' to see your tracked series\n"
-                        "Use 'add' to add a new series first"
-                    )
+                op.debug(f"Action: {action}, Series: {series.name} ({series.imdb_id})")
                 
                 # Route to appropriate action handler
                 if action == "score":
@@ -167,10 +162,13 @@ class UpdateCommand(Command):
     
     def get_help(self):
         """Return help text for update command."""
-        return """
+        return '''
 Update series properties.
 
-Usage: update <action> <imdb_id_or_link> [value]
+Usage: update <action> <series> [value]
+
+Arguments:
+  series            Series name (in quotes) or IMDB ID
 
 Actions:
   score             Update user score (requires value 1-10)
@@ -179,9 +177,9 @@ Actions:
   episode           Update last watched episode (requires episode code)
 
 Examples:
+  update score "Breaking Bad" 10
   update score tt0903747 8
-  update snooze tt0306414
+  update snooze "Game of Thrones"
   update unsnooze tt4574334
-  update episode tt0903747 S03E07
-  update episode tt0306414 2x5
-        """
+  update episode "Breaking Bad" S03E07
+        '''

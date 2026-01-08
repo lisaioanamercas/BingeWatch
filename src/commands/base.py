@@ -111,3 +111,68 @@ class Command(ABC):
     def debug(self, message: str):
         """Log a debug message (only visible in verbose mode)."""
         self.logger.debug(f"  → {message}")
+    
+    # ==========================================================================
+    # Series Resolution (Name or IMDB ID)
+    # ==========================================================================
+    
+    def resolve_series(self, identifier: str):
+        """
+        Resolve a series by name or IMDB ID.
+        
+        This helper enables commands to accept either:
+        - IMDB ID: "tt0903747" → direct database lookup
+        - Series name: "Breaking Bad" → search database by name
+        
+        Args:
+            identifier: Series name or IMDB ID
+            
+        Returns:
+            tuple: (series, error_message)
+                - If exactly one match: (Series, None)
+                - If no matches: (None, error_string)
+                - If multiple matches: (None, formatted_options_string)
+        """
+        # Check if it looks like an IMDB ID
+        if identifier.lower().startswith('tt') or 'imdb.com' in identifier.lower():
+            # Direct IMDB ID lookup
+            from ..utils.validators import validate_imdb_link, ValidationError
+            try:
+                imdb_id = validate_imdb_link(identifier)
+                series = self.db_manager.get_series(imdb_id)
+                if series:
+                    return (series, None)
+                else:
+                    return (None, f"Series with IMDB ID '{imdb_id}' not found.\nUse 'list' to see your tracked series.")
+            except ValidationError as e:
+                return (None, f"Invalid IMDB ID: {e}")
+        
+        # Search by name in the database
+        all_series = self.db_manager.get_all_series()
+        
+        # First try exact match (case-insensitive)
+        exact_matches = [s for s in all_series if s.name.lower() == identifier.lower()]
+        if len(exact_matches) == 1:
+            return (exact_matches[0], None)
+        
+        # Then try partial match (name contains the search term)
+        partial_matches = [s for s in all_series if identifier.lower() in s.name.lower()]
+        
+        if len(partial_matches) == 0:
+            return (None, f"No series found matching '{identifier}'.\nUse 'list' to see your tracked series.")
+        
+        if len(partial_matches) == 1:
+            return (partial_matches[0], None)
+        
+        # Multiple matches - show options
+        lines = [
+            f"Found {len(partial_matches)} series matching '{identifier}':",
+            "",
+            "Please specify the IMDB ID:",
+            ""
+        ]
+        for i, s in enumerate(partial_matches, 1):
+            snoozed = " [SNOOZED]" if s.snoozed else ""
+            lines.append(f"  {i}. {s.name} ({s.imdb_id}) - Score: {s.score}/10{snoozed}")
+        
+        return (None, "\n".join(lines))
