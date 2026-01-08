@@ -11,7 +11,7 @@ TECHNICAL ARCHITECTURE:
 The scraper uses a STATE MACHINE pattern for HTML parsing. Here's why:
 
 IMDB's HTML is complex and nested. A simple regex approach would be fragile:
-    BAD:  re.search(r'S(\d+).E(\d+)', html)  # Matches too much!
+    BAD:  re.search(r'S(\\d+).E(\\d+)', html)  # Matches too much!
     
 Instead, we track WHERE we are in the document structure:
     "I'm inside an episode container → I'm inside the title → This text is the episode code"
@@ -44,7 +44,8 @@ from dataclasses import dataclass
 from .base_scraper import BaseScraper
 from .http_client import HTTPClient, FetchError
 from ..database.models import Episode
-from ..config.settings import IMDB_SEASON_URL
+from ..config.settings import IMDB_SEASON_URL, IMDB_SEARCH_URL
+from urllib.parse import quote_plus
 
 
 @dataclass
@@ -78,6 +79,32 @@ class ParsedEpisode:
         if self.season is not None and self.episode is not None:
             return f"S{self.season:02d}E{self.episode:02d}"
         return "S00E00"
+
+
+@dataclass
+class SearchResult:
+    """
+    Represents a series found in IMDB search results.
+    
+    Attributes:
+        imdb_id: IMDB ID (e.g., "tt0903747")
+        title: Series title (e.g., "Breaking Bad")
+        year_range: Year or year range (e.g., "2008-2013" or "2022-")
+        type_info: Type info from IMDB (e.g., "TV Series")
+    """
+    imdb_id: str
+    title: str
+    year_range: Optional[str] = None
+    type_info: Optional[str] = None
+    
+    def __str__(self) -> str:
+        """Format as user-friendly string."""
+        parts = [self.title]
+        if self.year_range:
+            parts.append(f"({self.year_range})")
+        if self.type_info:
+            parts.append(f"[{self.type_info}]")
+        return " ".join(parts)
 
 
 class IMDBEpisodeParser(HTMLParser):
@@ -573,3 +600,187 @@ class IMDBScraper(BaseScraper):
         
         self.logger.warning(f"Could not parse episode code: {code}")
         return None, None
+    
+    def search_series(self, query: str, max_results: int = 5) -> List[SearchResult]:
+        """
+        Search IMDB for TV series by name.
+        
+        This method enables the user-friendly "add by name" feature.
+        It searches IMDB and returns matching TV series with their IMDB IDs.
+        
+        Args:
+            query: Series name to search for (e.g., "Breaking Bad")
+            max_results: Maximum number of results to return (default: 5)
+            
+        Returns:
+            List of SearchResult objects with IMDB IDs and metadata
+        """
+        # URL-encode the query for safe HTTP transmission
+        encoded_query = quote_plus(query)
+        url = IMDB_SEARCH_URL.format(query=encoded_query)
+        
+        self.logger.info(f"Searching IMDB for: {query}")
+        self.logger.debug(f"Search URL: {url}")
+        
+        try:
+            html = self.http_client.fetch(url)
+            
+            # Parse the search results
+            parser = IMDBSearchParser()
+            parser.feed(html)
+            
+            results = parser.results[:max_results]
+            self.logger.info(f"Found {len(results)} series matching '{query}'")
+            
+            return results
+            
+        except FetchError as e:
+            self.logger.error(f"Failed to search IMDB: {e}")
+            return []
+        except Exception as e:
+            self.logger.error(f"Unexpected error during search: {e}")
+            return []
+
+
+class IMDBSearchParser(HTMLParser):
+    """
+    HTML Parser for IMDB Search Results Page.
+    
+    Extracts series information from IMDB's search results.
+    
+    IMDB SEARCH RESULT HTML STRUCTURE (as of 2024):
+    ================================================
+    <li class="find-result-item">
+        <a href="/title/tt0903747/">
+            <img ... />
+        </a>
+        <div class="ipc-metadata-list-summary-item__tc">
+            <a href="/title/tt0903747/">Breaking Bad</a>
+            <ul>
+                <li>2008-2013</li>
+                <li>TV Series</li>
+            </ul>
+        </div>
+    </li>
+    
+    The parser uses state machine pattern similar to IMDBEpisodeParser:
+    - Detect when we enter a search result item
+    - Extract the IMDB ID from the href
+    - Extract title, year range, and type info from nested elements
+    """
+    
+    def __init__(self):
+        """Initialize the search result parser."""
+        super().__init__()
+        
+        # Results storage
+        self.results: List[SearchResult] = []
+        
+        # Current parsing state
+        self.current_result: Optional[dict] = None
+        
+        # State machine flags
+        self.in_result_item = False
+        self.in_title_link = False
+        self.in_metadata_list = False
+        self.depth_in_item = 0
+        self.capture_metadata = False
+        
+    def handle_starttag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]):
+        """Handle opening HTML tags."""
+        attr_dict = dict(attrs)
+        class_name = attr_dict.get('class', '')
+        href = attr_dict.get('href', '')
+        
+        # Detect search result item container
+        # IMDB uses various wrapper classes
+        result_indicators = [
+            'find-result-item',
+            'ipc-metadata-list-summary-item',
+            'findResult',
+        ]
+        
+        if any(indicator in class_name for indicator in result_indicators):
+            self.in_result_item = True
+            self.depth_in_item = 1
+            self.current_result = {
+                'imdb_id': None,
+                'title': None,
+                'year_range': None,
+                'type_info': None,
+            }
+            return
+        
+        # Track depth when inside result item
+        if self.in_result_item:
+            self.depth_in_item += 1
+            
+            # Extract IMDB ID from title link
+            if tag == 'a' and '/title/tt' in href:
+                # Extract tt... from href like "/title/tt0903747/"
+                match = re.search(r'/title/(tt\d+)', href)
+                if match and self.current_result:
+                    self.current_result['imdb_id'] = match.group(1)
+                    # Title link detected - next text is the title
+                    if 'title' in class_name.lower() or self.current_result['title'] is None:
+                        self.in_title_link = True
+            
+            # Detect metadata list (contains year and type)
+            if tag in ['ul', 'li'] and self.current_result:
+                if 'metadata' in class_name or self.in_metadata_list:
+                    self.in_metadata_list = True
+                    if tag == 'li':
+                        self.capture_metadata = True
+    
+    def handle_endtag(self, tag: str):
+        """Handle closing HTML tags."""
+        if tag == 'a':
+            self.in_title_link = False
+        
+        if tag == 'li':
+            self.capture_metadata = False
+        
+        if tag == 'ul':
+            self.in_metadata_list = False
+        
+        # Track container depth
+        if self.in_result_item:
+            self.depth_in_item -= 1
+            
+            # When depth returns to 0, we've exited the result item
+            if self.depth_in_item <= 0:
+                self.in_result_item = False
+                
+                # Save the result if we have minimum required data
+                if self.current_result and self.current_result.get('imdb_id'):
+                    self.results.append(SearchResult(
+                        imdb_id=self.current_result['imdb_id'],
+                        title=self.current_result.get('title') or 'Unknown',
+                        year_range=self.current_result.get('year_range'),
+                        type_info=self.current_result.get('type_info'),
+                    ))
+                
+                self.current_result = None
+    
+    def handle_data(self, data: str):
+        """Handle text content within tags."""
+        if not self.in_result_item or not self.current_result:
+            return
+        
+        data = data.strip()
+        if not data:
+            return
+        
+        # Capture title from title link
+        if self.in_title_link and not self.current_result.get('title'):
+            self.current_result['title'] = data
+            return
+        
+        # Capture metadata (year range and type)
+        if self.capture_metadata:
+            # Check if it looks like a year or year range
+            if re.match(r'^\d{4}(-\d{4})?(-)?$', data):
+                self.current_result['year_range'] = data
+            # Check if it's a type indicator
+            elif any(t in data.lower() for t in ['series', 'mini', 'tv', 'show']):
+                self.current_result['type_info'] = data

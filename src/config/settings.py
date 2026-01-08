@@ -46,6 +46,13 @@ RETRY_DELAY = 1
 # Example: https://www.imdb.com/title/tt0903747/episodes?season=1
 IMDB_SEASON_URL = "https://www.imdb.com/title/{imdb_id}/episodes?season={season}"
 
+# IMDB Search URL template
+# {query}: URL-encoded series name to search for
+# s=tt: Search only titles (not people)
+# ttype=tv: Filter to TV series only
+# Example: https://www.imdb.com/find/?q=breaking+bad&s=tt&ttype=tv
+IMDB_SEARCH_URL = "https://www.imdb.com/find/?q={query}&s=tt&ttype=tv"
+
 # Validation settings
 MIN_SCORE = 1
 MAX_SCORE = 10
