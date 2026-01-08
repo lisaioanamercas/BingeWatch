@@ -1,6 +1,8 @@
 """
 BingeWatch - TV Series Tracker
 Main entry point and CLI orchestration.
+
+Phase 6 Enhancement: Added verbose/quiet modes and episodes command.
 """
 
 import sys
@@ -15,7 +17,8 @@ from .commands.list_command import ListCommand
 from .commands.watchlist_command import WatchlistCommand
 from .commands.trailers_command import TrailersCommand
 from .commands.check_command import CheckCommand
-from .utils.logger import get_logger
+from .commands.episodes_command import EpisodesCommand
+from .utils.logger import get_logger, set_verbose, set_quiet
 
 
 class CommandFactory:
@@ -44,6 +47,8 @@ class CommandFactory:
             'trailers': TrailersCommand(self.db_manager),
             'tr': TrailersCommand(self.db_manager),  # Alias
             'check': CheckCommand(self.db_manager),
+            'episodes': EpisodesCommand(self.db_manager),
+            'ep': EpisodesCommand(self.db_manager),  # Alias
         }
     
     def get_command(self, command_name: str) -> Command:
@@ -99,17 +104,23 @@ Available Commands:
   delete    Remove a series from tracking
   update    Update series properties (score, snooze, episode)
   list      List all tracked series
+  episodes  Show all new episodes across all series
   watchlist Show prioritized episodes to watch (ranked by score)
   trailers  Find YouTube trailers for episodes
   check     Scan for NEW videos (only shows new discoveries)
   help      Show this help message
   exit      Exit the application
 
+Global Options:
+  --verbose, -v    Show detailed debug information
+  --quiet, -q      Show only errors and results
+
 Use 'help <command>' for detailed information about a specific command.
 
 Examples:
   add "Breaking Bad" tt0903747 9
   list --check-episodes
+  episodes --min-score 8
   watchlist --top 10
   trailers tt0903747 S01E04
   check
@@ -243,21 +254,37 @@ Examples:
             command_args: List of command-line arguments
         """
         if not command_args:
-            print("Error: No command specified")
+            print("✗ Error: No command specified")
+            print("  Use 'help' to see available commands.")
             self.print_help()
             return 1
         
-        command_name = command_args[0]
-        args = command_args[1:]
+        # Handle global flags
+        args = list(command_args)
+        if '--verbose' in args or '-v' in args:
+            set_verbose(True)
+            args = [a for a in args if a not in ('--verbose', '-v')]
+            self.logger.debug("Verbose mode enabled")
+        
+        if '--quiet' in args or '-q' in args:
+            set_quiet(True)
+            args = [a for a in args if a not in ('--quiet', '-q')]
+        
+        if not args:
+            print("✗ Error: No command specified")
+            return 1
+        
+        command_name = args[0]
+        command_args = args[1:]
         
         if command_name in ['help', '-h', '--help']:
-            if args:
-                self.print_command_help(args[0])
+            if command_args:
+                self.print_command_help(command_args[0])
             else:
                 self.print_help()
             return 0
         
-        result = self.execute_command(command_name, args)
+        result = self.execute_command(command_name, command_args)
         print(result)
         return 0
 
