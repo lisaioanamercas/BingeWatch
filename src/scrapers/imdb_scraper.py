@@ -650,23 +650,22 @@ class IMDBSearchParser(HTMLParser):
     
     IMDB SEARCH RESULT HTML STRUCTURE (as of 2024):
     ================================================
-    <li class="find-result-item">
-        <a href="/title/tt0903747/">
-            <img ... />
+    <li class="ipc-metadata-list-summary-item">
+        <a class="ipc-title-link-wrapper" href="/title/tt0903747/?ref_=...">
+            <h3 class="ipc-title__text">Breaking Bad</h3>
         </a>
-        <div class="ipc-metadata-list-summary-item__tc">
-            <a href="/title/tt0903747/">Breaking Bad</a>
-            <ul>
-                <li>2008-2013</li>
-                <li>TV Series</li>
-            </ul>
+        <div class="cli-title-metadata">
+            <span class="cli-title-metadata-item">2008–2013</span>
+            <span class="cli-title-type-data">TV Series</span>
         </div>
     </li>
     
-    The parser uses state machine pattern similar to IMDBEpisodeParser:
-    - Detect when we enter a search result item
-    - Extract the IMDB ID from the href
-    - Extract title, year range, and type info from nested elements
+    The parser uses state machine pattern:
+    - Detect when we enter a search result item (li.ipc-metadata-list-summary-item)
+    - Extract the IMDB ID from the href of a.ipc-title-link-wrapper
+    - Extract title from h3.ipc-title__text
+    - Extract year from span.cli-title-metadata-item
+    - Extract type from span.cli-title-type-data
     """
     
     def __init__(self):
@@ -681,10 +680,10 @@ class IMDBSearchParser(HTMLParser):
         
         # State machine flags
         self.in_result_item = False
-        self.in_title_link = False
-        self.in_metadata_list = False
+        self.in_title_element = False  # h3.ipc-title__text
+        self.in_year_element = False   # span.cli-title-metadata-item
+        self.in_type_element = False   # span.cli-title-type-data
         self.depth_in_item = 0
-        self.capture_metadata = False
         
     def handle_starttag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]):
         """Handle opening HTML tags."""
@@ -693,14 +692,8 @@ class IMDBSearchParser(HTMLParser):
         href = attr_dict.get('href', '')
         
         # Detect search result item container
-        # IMDB uses various wrapper classes
-        result_indicators = [
-            'find-result-item',
-            'ipc-metadata-list-summary-item',
-            'findResult',
-        ]
-        
-        if any(indicator in class_name for indicator in result_indicators):
+        # Looking for: <li class="ipc-metadata-list-summary-item ...">
+        if tag == 'li' and 'ipc-metadata-list-summary-item' in class_name:
             self.in_result_item = True
             self.depth_in_item = 1
             self.current_result = {
@@ -716,32 +709,32 @@ class IMDBSearchParser(HTMLParser):
             self.depth_in_item += 1
             
             # Extract IMDB ID from title link
+            # Looking for: <a class="ipc-title-link-wrapper" href="/title/tt0903747/...">
             if tag == 'a' and '/title/tt' in href:
-                # Extract tt... from href like "/title/tt0903747/"
                 match = re.search(r'/title/(tt\d+)', href)
                 if match and self.current_result:
                     self.current_result['imdb_id'] = match.group(1)
-                    # Title link detected - next text is the title
-                    if 'title' in class_name.lower() or self.current_result['title'] is None:
-                        self.in_title_link = True
             
-            # Detect metadata list (contains year and type)
-            if tag in ['ul', 'li'] and self.current_result:
-                if 'metadata' in class_name or self.in_metadata_list:
-                    self.in_metadata_list = True
-                    if tag == 'li':
-                        self.capture_metadata = True
+            # Detect title element: <h3 class="ipc-title__text">
+            if tag == 'h3' and 'ipc-title__text' in class_name:
+                self.in_title_element = True
+            
+            # Detect year element: <span class="cli-title-metadata-item">
+            if tag == 'span' and 'cli-title-metadata-item' in class_name:
+                self.in_year_element = True
+            
+            # Detect type element: <span class="cli-title-type-data">
+            if tag == 'span' and 'cli-title-type-data' in class_name:
+                self.in_type_element = True
     
     def handle_endtag(self, tag: str):
         """Handle closing HTML tags."""
-        if tag == 'a':
-            self.in_title_link = False
+        if tag == 'h3':
+            self.in_title_element = False
         
-        if tag == 'li':
-            self.capture_metadata = False
-        
-        if tag == 'ul':
-            self.in_metadata_list = False
+        if tag == 'span':
+            self.in_year_element = False
+            self.in_type_element = False
         
         # Track container depth
         if self.in_result_item:
@@ -751,7 +744,7 @@ class IMDBSearchParser(HTMLParser):
             if self.depth_in_item <= 0:
                 self.in_result_item = False
                 
-                # Save the result if we have minimum required data
+                # Save the result if we have minimum required data (IMDB ID)
                 if self.current_result and self.current_result.get('imdb_id'):
                     self.results.append(SearchResult(
                         imdb_id=self.current_result['imdb_id'],
@@ -771,16 +764,17 @@ class IMDBSearchParser(HTMLParser):
         if not data:
             return
         
-        # Capture title from title link
-        if self.in_title_link and not self.current_result.get('title'):
+        # Capture title from h3.ipc-title__text
+        if self.in_title_element and not self.current_result.get('title'):
             self.current_result['title'] = data
             return
         
-        # Capture metadata (year range and type)
-        if self.capture_metadata:
-            # Check if it looks like a year or year range
-            if re.match(r'^\d{4}(-\d{4})?(-)?$', data):
-                self.current_result['year_range'] = data
-            # Check if it's a type indicator
-            elif any(t in data.lower() for t in ['series', 'mini', 'tv', 'show']):
-                self.current_result['type_info'] = data
+        # Capture year from span.cli-title-metadata-item
+        if self.in_year_element and not self.current_result.get('year_range'):
+            # Year format: "2008–2013" or "2022–" or "2024"
+            self.current_result['year_range'] = data
+            return
+        
+        # Capture type from span.cli-title-type-data
+        if self.in_type_element and not self.current_result.get('type_info'):
+            self.current_result['type_info'] = data
