@@ -99,32 +99,44 @@ class BingeWatchCLI:
     def print_help(self):
         """Print general help information."""
         help_text = """
-Available Commands:
-  add       Add a new series to track
-  delete    Remove a series from tracking
-  update    Update series properties (score, snooze, episode)
-  list      List all tracked series
-  episodes  Show all new episodes across all series
-  watchlist Show prioritized episodes to watch (ranked by score)
-  trailers  Find YouTube trailers for episodes
-  check     Scan for NEW videos (only shows new discoveries)
-  help      Show this help message
-  exit      Exit the application
+╔══════════════════════════════════════════════════════════════════╗
+║                     BingeWatch Commands                          ║
+╚══════════════════════════════════════════════════════════════════╝
 
-Global Options:
-  --verbose, -v    Show detailed debug information
-  --quiet, -q      Show only errors and results
+📌 GETTING STARTED (do these first!)
+─────────────────────────────────────
+  add         Add a series → add "Breaking Bad" 9
+  list        See your series → list
 
-Use 'help <command>' for detailed information about a specific command.
+📺 WHAT TO WATCH
+─────────────────────────────────────
+  episodes    New episodes across all series → episodes
+  watchlist   Prioritized by score → watchlist --top 10
 
-Examples:
-  add "Breaking Bad" tt0903747 9
-  list --check-episodes
-  episodes --min-score 8
-  watchlist --top 10
-  trailers tt0903747 S01E04
-  check
-  update score tt0903747 10
+🎬 DISCOVER CONTENT
+─────────────────────────────────────
+  trailers    YouTube trailers → trailers "Breaking Bad" S01E01
+  check       Scan for NEW videos → check
+
+✏️ MANAGE YOUR SERIES
+─────────────────────────────────────
+  update      Change score/snooze/episode:
+              → update score "Breaking Bad" 10
+              → update snooze "Breaking Bad"
+              → update episode "Breaking Bad" S05E16
+  delete      Remove series → delete "Breaking Bad"
+
+❓ HELP
+─────────────────────────────────────
+  help        Show this message
+  help <cmd>  Detailed help → help add
+
+⚙️ OPTIONS
+─────────────────────────────────────
+  --verbose   Show debug info
+  --quiet     Minimal output
+
+Type 'exit' to quit.
         """
         print(help_text)
     
