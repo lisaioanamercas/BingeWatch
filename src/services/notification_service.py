@@ -74,8 +74,8 @@ class Notification:
     def __str__(self) -> str:
         """Human-readable notification."""
         if self.episode_code == 'general':
-            return f"🔔 {self.series_name}: {self.count} new video(s) found"
-        return f"🔔 {self.series_name} {self.episode_code}: {self.count} new video(s) found"
+            return f"[NEW] {self.series_name}: {self.count} new video(s) found"
+        return f"[NEW] {self.series_name} {self.episode_code}: {self.count} new video(s) found"
 
 
 class NotificationService:

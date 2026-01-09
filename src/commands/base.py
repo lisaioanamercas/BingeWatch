@@ -76,22 +76,22 @@ class Command(ABC):
     @staticmethod
     def success_msg(text: str) -> str:
         """Format a success message with checkmark."""
-        return f"✓ {text}"
+        return f"[OK] {text}"
     
     @staticmethod
     def error_msg(text: str) -> str:
         """Format an error message with X mark."""
-        return f"✗ {text}"
+        return f"[ERROR] {text}"
     
     @staticmethod
     def info_msg(text: str) -> str:
         """Format an info message with info symbol."""
-        return f"ℹ {text}"
+        return f"[INFO] {text}"
     
     @staticmethod
     def warning_msg(text: str) -> str:
         """Format a warning message."""
-        return f"⚠ {text}"
+        return f"[WARN] {text}"
     
     @staticmethod
     def header(text: str, width: int = 60) -> str:

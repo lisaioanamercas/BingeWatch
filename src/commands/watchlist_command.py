@@ -11,7 +11,7 @@ DIFFERENCE FROM 'list' COMMAND:
 
 Example Output:
 ---------------
-    📺 YOUR WATCHLIST (47 episodes to watch)
+    YOUR WATCHLIST (47 episodes to watch)
     ═══════════════════════════════════════════
     
     #1  [10/10] Game of Thrones - S01E02: The Kingsroad
@@ -94,7 +94,7 @@ class WatchlistCommand(Command):
         except Exception as e:
             error_msg = f"Failed to generate watchlist: {e}"
             self.logger.error(error_msg)
-            return f"✗ {error_msg}"
+            return f"[ERROR] {error_msg}"
     
     def _parse_int_arg(self, args, long_flag, short_flag):
         """
@@ -132,11 +132,11 @@ class WatchlistCommand(Command):
         next_ep = self.ranker.get_next_episode()
         
         if not next_ep:
-            return "✓ All caught up! No new episodes to watch."
+            return "[OK] All caught up! No new episodes to watch."
         
         lines = [
             "═" * 60,
-            "📺 NEXT UP",
+            "NEXT UP",
             "═" * 60,
             "",
             f"  {next_ep.series_name}",
@@ -178,13 +178,13 @@ class WatchlistCommand(Command):
             # Provide helpful message when empty
             if min_score:
                 return f"No new episodes from series with score >= {min_score}."
-            return "✓ All caught up! No new episodes to watch."
+            return "[OK] All caught up! No new episodes to watch."
         
         lines = []
         
         # Header
         lines.append("═" * 70)
-        lines.append(f"📺 YOUR WATCHLIST ({len(watchlist)} episodes to watch)")
+        lines.append(f"YOUR WATCHLIST ({len(watchlist)} episodes to watch)")
         
         # Show active filters
         filters = []
@@ -230,7 +230,7 @@ class WatchlistCommand(Command):
         
         # Summary stats
         series_names = set(ep.series_name for ep in watchlist)
-        lines.append(f"📊 {len(watchlist)} episodes across {len(series_names)} series")
+        lines.append(f"Summary: {len(watchlist)} episodes across {len(series_names)} series")
         
         # Tips
         lines.append("")

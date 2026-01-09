@@ -54,7 +54,7 @@ class StatsCommand(Command):
         show_series = '--series' in args or '-s' in args
         
         lines = [
-            self.header("📊 BingeWatch Statistics"),
+            self.header("BingeWatch Statistics"),
             ""
         ]
         
@@ -63,7 +63,7 @@ class StatsCommand(Command):
         active_series = [s for s in all_series if not s.snoozed]
         snoozed_series = [s for s in all_series if s.snoozed]
         
-        lines.append("📺 SERIES")
+        lines.append("SERIES")
         lines.append(self.divider(40))
         lines.append(f"  Total tracked:    {len(all_series)}")
         lines.append(f"  Active:           {len(active_series)}")
@@ -77,16 +77,16 @@ class StatsCommand(Command):
             
             lines.append(f"  Average score:    {avg_score:.1f}/10")
             lines.append("")
-            lines.append("  🏆 Top Rated:")
+            lines.append("  Top Rated:")
             for i, series in enumerate(top_rated, 1):
-                snoozed = " 💤" if series.snoozed else ""
+                snoozed = " [SNOOZED]" if series.snoozed else ""
                 lines.append(f"     {i}. {series.name} ({series.score}/10){snoozed}")
             lines.append("")
         
         # Cache Statistics
         cache_stats = self.video_cache.get_stats()
         
-        lines.append("🎬 VIDEO CACHE")
+        lines.append("VIDEO CACHE")
         lines.append(self.divider(40))
         lines.append(f"  Entries tracked:  {cache_stats['total_entries']}")
         lines.append(f"  Videos found:     {cache_stats['total_videos']}")
@@ -117,7 +117,7 @@ class StatsCommand(Command):
         
         # Detailed cache info if requested
         if show_cache and cache_entries:
-            lines.append("  📁 Cache Breakdown:")
+            lines.append("  Cache Breakdown:")
             for key, entry in sorted(cache_entries.items())[:10]:
                 video_count = len(entry.get('video_ids', []))
                 last_check = entry.get('last_checked', 'unknown')
@@ -135,16 +135,16 @@ class StatsCommand(Command):
         
         # Series breakdown if requested
         if show_series and all_series:
-            lines.append("📋 ALL SERIES")
+            lines.append("ALL SERIES")
             lines.append(self.divider(40))
             for series in sorted(all_series, key=lambda s: s.score, reverse=True):
-                status = "💤" if series.snoozed else "✓"
+                status = "[Z]" if series.snoozed else "[*]"
                 lines.append(f"  {status} {series.name}")
                 lines.append(f"     Score: {series.score}/10 | Last: {series.last_episode}")
             lines.append("")
         
         # Quick tips
-        lines.append("💡 QUICK ACTIONS")
+        lines.append("QUICK ACTIONS")
         lines.append(self.divider(40))
         lines.append("  • Run 'check' to scan for new trailers")
         lines.append("  • Run 'episodes' to see what's new")

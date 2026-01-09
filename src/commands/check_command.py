@@ -90,7 +90,7 @@ class CheckCommand(Command):
         except Exception as e:
             error_msg = f"Failed to check for new videos: {e}"
             self.logger.error(error_msg)
-            return f"✗ {error_msg}"
+            return f"[ERROR] {error_msg}"
     
     def _parse_string_arg(self, args, long_flag, short_flag) -> Optional[str]:
         """Parse a string argument from command args."""
@@ -128,7 +128,7 @@ class CheckCommand(Command):
         """
         lines = [
             "═" * 60,
-            "🔔 CHECKING FOR NEW VIDEOS...",
+            "CHECKING FOR NEW VIDEOS...",
             "═" * 60,
             ""
         ]

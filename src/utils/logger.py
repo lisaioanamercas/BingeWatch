@@ -158,19 +158,19 @@ class OperationLogger:
         """Log successful completion."""
         self._completed = True
         duration = self._get_duration()
-        self.logger.info(f"✓ {message}")
+        self.logger.info(f"[OK] {message}")
         self.logger.debug(f"[SUCCESS] {self.operation_name} ({duration}ms): {message}")
     
     def error(self, message: str):
         """Log error."""
         self._completed = True
         duration = self._get_duration()
-        self.logger.error(f"✗ {message}")
+        self.logger.error(f"[ERROR] {message}")
         self.logger.debug(f"[ERROR] {self.operation_name} ({duration}ms): {message}")
     
     def info(self, message: str):
         """Log info message."""
-        self.logger.info(f"ℹ {message}")
+        self.logger.info(f"[INFO] {message}")
     
     def debug(self, message: str):
         """Log debug message (only shown in verbose mode)."""

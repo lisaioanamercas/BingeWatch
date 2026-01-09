@@ -121,22 +121,22 @@ class BingeWatchCLI:
 ║                     BingeWatch Commands                          ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-📌 GETTING STARTED (do these first!)
+GETTING STARTED (do these first!)
 ─────────────────────────────────────
   add         Add a series → add "Breaking Bad" 9
   list        See your series → list
 
-📺 WHAT TO WATCH
+WHAT TO WATCH
 ─────────────────────────────────────
   episodes    New episodes across all series → episodes
   watchlist   Prioritized by score → watchlist --top 10
 
-🎬 DISCOVER CONTENT
+DISCOVER CONTENT
 ─────────────────────────────────────
   trailers    YouTube trailers → trailers "Breaking Bad" S01E01
   check       Scan for NEW videos → check
 
-✏️ MANAGE YOUR SERIES
+MANAGE YOUR SERIES
 ─────────────────────────────────────
   update      Change score/snooze/episode:
               → update score "Breaking Bad" 10
@@ -144,12 +144,12 @@ class BingeWatchCLI:
               → update episode "Breaking Bad" S05E16
   delete      Remove series → delete "Breaking Bad"
 
-❓ HELP
+HELP
 ─────────────────────────────────────
   help        Show this message
   help <cmd>  Detailed help → help add
 
-⚙️ OPTIONS
+OPTIONS
 ─────────────────────────────────────
   --verbose   Show debug info
   --quiet     Minimal output
@@ -250,7 +250,7 @@ Type 'exit' to quit.
                 
                 # Handle special commands
                 if command_name in ['exit', 'quit', 'q']:
-                    print("Goodbye! Happy watching! 📺")
+                    print("Goodbye! Happy watching!")
                     break
                 
                 if command_name == 'help':
@@ -284,7 +284,7 @@ Type 'exit' to quit.
             command_args: List of command-line arguments
         """
         if not command_args:
-            print("✗ Error: No command specified")
+            print("[ERROR] No command specified")
             print("  Use 'help' to see available commands.")
             self.print_help()
             return 1
@@ -301,7 +301,7 @@ Type 'exit' to quit.
             args = [a for a in args if a not in ('--quiet', '-q')]
         
         if not args:
-            print("✗ Error: No command specified")
+            print("[ERROR] No command specified")
             return 1
         
         command_name = args[0]

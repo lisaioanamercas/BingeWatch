@@ -114,7 +114,7 @@ class TrailersCommand(Command):
         except Exception as e:
             error_msg = f"Failed to search trailers: {e}"
             self.logger.error(error_msg)
-            return f"✗ {error_msg}"
+            return f"[ERROR] {error_msg}"
     
     def _parse_int_arg(self, args, long_flag, short_flag) -> Optional[int]:
         """Parse an integer argument from command args."""
@@ -143,7 +143,7 @@ class TrailersCommand(Command):
         
         lines = [
             "═" * 60,
-            f"🎬 TRAILERS: {series.name} {episode_code}",
+            f"TRAILERS: {series.name} {episode_code}",
             "═" * 60,
             ""
         ]
@@ -189,7 +189,7 @@ class TrailersCommand(Command):
         
         lines = [
             "═" * 60,
-            f"🎬 TRAILERS: {series.name}",
+            f"TRAILERS: {series.name}",
             "═" * 60,
             ""
         ]
@@ -234,11 +234,11 @@ class TrailersCommand(Command):
         next_ep = self.ranker.get_next_episode()
         
         if not next_ep:
-            return "✓ All caught up! No episodes to find trailers for."
+            return "[OK] All caught up! No episodes to find trailers for."
         
         lines = [
             "═" * 60,
-            f"🎬 TRAILERS FOR YOUR NEXT EPISODE",
+            f"TRAILERS FOR YOUR NEXT EPISODE",
             "═" * 60,
             "",
             f"  Series: {next_ep.series_name}",

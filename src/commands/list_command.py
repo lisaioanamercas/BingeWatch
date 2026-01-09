@@ -60,17 +60,17 @@ class ListCommand(Command):
                         )
                         
                         if new_episodes:
-                            output_lines.append(f"   ✓ {len(new_episodes)} new episode(s) available!")
+                            output_lines.append(f"   [+] {len(new_episodes)} new episode(s) available!")
                             # Show first 3 new episodes
                             for ep in new_episodes[:3]:
                                 output_lines.append(f"      • {ep}")
                             if len(new_episodes) > 3:
                                 output_lines.append(f"      ... and {len(new_episodes) - 3} more")
                         else:
-                            output_lines.append("   ✓ No new episodes")
+                            output_lines.append("   [*] No new episodes")
                     
                     except Exception as e:
-                        output_lines.append(f"   ✗ Error checking episodes: {e}")
+                        output_lines.append(f"   [ERROR] Error checking episodes: {e}")
                         self.logger.error(f"Error checking {series.imdb_id}: {e}")
             
             output_lines.append("\n" + "=" * 70)
@@ -88,7 +88,7 @@ class ListCommand(Command):
         except Exception as e:
             error_msg = f"Failed to list series: {e}"
             self.logger.error(error_msg)
-            return f"✗ {error_msg}"
+            return f"[ERROR] {error_msg}"
     
     def get_help(self):
         """Return help text for list command."""

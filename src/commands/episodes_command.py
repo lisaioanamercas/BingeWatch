@@ -90,7 +90,7 @@ class EpisodesCommand(Command):
             
             except Exception as e:
                 op.error(str(e))
-                return f"✗ Failed to list episodes: {e}"
+                return f"[ERROR] Failed to list episodes: {e}"
     
     def _parse_int_arg(self, args: list, long_flag: str, short_flag: str) -> Optional[int]:
         """Parse an integer argument from command args."""
@@ -108,10 +108,10 @@ class EpisodesCommand(Command):
         """Format message when no episodes are found."""
         lines = [
             "═" * 60,
-            "📺 NEW EPISODES",
+            "NEW EPISODES",
             "═" * 60,
             "",
-            "✓ You're all caught up! No new episodes found.",
+            "[OK] You're all caught up! No new episodes found.",
             ""
         ]
         
@@ -119,10 +119,10 @@ class EpisodesCommand(Command):
         if not include_snoozed:
             snoozed_count = len([s for s in self.db_manager.get_all_series(True) if s.snoozed])
             if snoozed_count > 0:
-                lines.append(f"ℹ {snoozed_count} snoozed series hidden. Use '--all' to include them.")
+                lines.append(f"[INFO] {snoozed_count} snoozed series hidden. Use '--all' to include them.")
         
         if min_score:
-            lines.append(f"ℹ Filtering for score >= {min_score}. Try a lower score or remove filter.")
+            lines.append(f"[INFO] Filtering for score >= {min_score}. Try a lower score or remove filter.")
         
         lines.append("")
         lines.append("Tip: Use 'add' command to track more series.")
@@ -153,7 +153,7 @@ class EpisodesCommand(Command):
         """
         lines = [
             "═" * 60,
-            "📺 NEW EPISODES",
+            "NEW EPISODES",
             "═" * 60,
             ""
         ]
@@ -218,7 +218,7 @@ class EpisodesCommand(Command):
         if not include_snoozed:
             snoozed_count = len([s for s in self.db_manager.get_all_series(True) if s.snoozed])
             if snoozed_count > 0:
-                lines.append(f"ℹ {snoozed_count} snoozed series hidden. Use '--all' to show all.")
+                lines.append(f"[INFO] {snoozed_count} snoozed series hidden. Use '--all' to show all.")
         
         lines.append(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         lines.append("═" * 60)
