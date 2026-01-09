@@ -112,7 +112,7 @@ class UpdateCommand(Command):
             op.success(f"Snoozed '{series.name}'")
             return (
                 self.success_msg(f"Snoozed: {series.name}") + "\n\n"
-                "ℹ This series will be excluded from 'episodes' and 'check' commands.\n"
+                                "[INFO] This series will be excluded from 'episodes' and 'check' commands.\n"
                 "  Use 'update unsnooze' to resume notifications."
             )
         op.error("Database update failed")
@@ -129,7 +129,7 @@ class UpdateCommand(Command):
             op.success(f"Unsnoozed '{series.name}'")
             return (
                 self.success_msg(f"Unsnoozed: {series.name}") + "\n\n"
-                "ℹ This series will now appear in 'episodes' and 'check' commands."
+                                "[INFO] This series will now appear in 'episodes' and 'check' commands."
             )
         op.error("Database update failed")
         return self.error_msg(f"Failed to unsnooze series {series.imdb_id}")
@@ -155,7 +155,7 @@ class UpdateCommand(Command):
             return (
                 self.success_msg(f"Updated last episode for '{series.name}':") + "\n"
                 f"  {old_episode}  →  {episode_code}\n\n"
-                "ℹ Episodes after this will now appear in 'episodes' command."
+                                "[INFO] Episodes after this will now appear in 'episodes' command."
             )
         op.error("Database update failed")
         return self.error_msg(f"Failed to update episode for {series.imdb_id}")

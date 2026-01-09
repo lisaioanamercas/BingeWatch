@@ -51,7 +51,7 @@ class DeleteCommand(Command):
                         self.success_msg("Successfully deleted series:") + "\n"
                         f"  Name:     {series.name}\n"
                         f"  IMDB ID:  {series.imdb_id}\n\n"
-                        "ℹ The series has been removed from your tracking list."
+                        "[INFO] The series has been removed from your tracking list."
                     )
                 else:
                     op.error(f"Database error for {series.imdb_id}")
