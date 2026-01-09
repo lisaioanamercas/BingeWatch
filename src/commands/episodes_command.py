@@ -58,6 +58,9 @@ class EpisodesCommand(Command):
                 min_score = self._parse_int_arg(args, '--min-score', '-m')
                 top_n = self._parse_int_arg(args, '--top', '-t')
                 
+                # Detecteaza filtru dupa nume serie (primul argument care nu e flag)
+                series_filter = self._parse_series_filter(args)
+                
                 # Enable verbose logging if debug mode
                 if debug_mode:
                     from ..utils.logger import set_verbose
@@ -68,11 +71,23 @@ class EpisodesCommand(Command):
                 episodes = self.ranker.get_prioritized_watchlist(
                     include_snoozed=include_snoozed,
                     min_score=min_score,
-                    max_results=top_n
+                    max_results=None  # Aplica limita dupa filtrare
                 )
                 
+                # Filtreaza dupa serie daca e specificat
+                if series_filter:
+                    episodes = [
+                        ep for ep in episodes 
+                        if series_filter.lower() in ep.series_name.lower()
+                    ]
+                    op.debug(f"Filtered to series matching '{series_filter}': {len(episodes)} episodes")
+                
+                # Aplica limita top_n dupa filtrare
+                if top_n and episodes:
+                    episodes = episodes[:top_n]
+                
                 if not episodes:
-                    return self._format_no_episodes(include_snoozed, min_score)
+                    return self._format_no_episodes(include_snoozed, min_score, series_filter)
                 
                 # Format output
                 result = self._format_episodes(
@@ -80,7 +95,8 @@ class EpisodesCommand(Command):
                     include_snoozed, 
                     min_score, 
                     top_n,
-                    verbose
+                    verbose,
+                    series_filter
                 )
                 
                 op.success(f"Found {len(episodes)} new episode(s)")
@@ -102,7 +118,24 @@ class EpisodesCommand(Command):
                     pass
         return None
     
-    def _format_no_episodes(self, include_snoozed: bool, min_score: Optional[int]) -> str:
+    def _parse_series_filter(self, args: list) -> Optional[str]:
+        """Extrage numele seriei din argumente (primul arg care nu e flag)."""
+        flags = ['--all', '-a', '--verbose', '-v', '--debug', '-d', 
+                 '--min-score', '-m', '--top', '-t']
+        skip_next = False
+        
+        for arg in args:
+            if skip_next:
+                skip_next = False
+                continue
+            if arg in ['--min-score', '-m', '--top', '-t']:
+                skip_next = True
+                continue
+            if arg not in flags and not arg.startswith('-'):
+                return arg
+        return None
+    
+    def _format_no_episodes(self, include_snoozed: bool, min_score: Optional[int], series_filter: Optional[str] = None) -> str:
         """Format message when no episodes are found."""
         lines = [
             "═" * 60,
@@ -122,6 +155,9 @@ class EpisodesCommand(Command):
         if min_score:
             lines.append(f"[INFO] Filtering for score >= {min_score}. Try a lower score or remove filter.")
         
+        if series_filter:
+            lines.append(f"[INFO] No episodes found for series matching '{series_filter}'.")
+        
         lines.append("")
         lines.append("Tip: Use 'add' command to track more series.")
         lines.append("═" * 60)
@@ -134,7 +170,8 @@ class EpisodesCommand(Command):
         include_snoozed: bool,
         min_score: Optional[int],
         top_n: Optional[int],
-        verbose: bool
+        verbose: bool,
+        series_filter: Optional[str] = None
     ) -> str:
         """
         Format the list of episodes for display.
@@ -163,6 +200,8 @@ class EpisodesCommand(Command):
         
         # Show active filters
         filters = []
+        if series_filter:
+            filters.append(f"series: '{series_filter}'")
         if min_score:
             filters.append(f"score >= {min_score}")
         if top_n:
@@ -234,32 +273,29 @@ class EpisodesCommand(Command):
     
     def get_help(self) -> str:
         """Return help text for episodes command."""
-        return """
-List all new episodes across all tracked series.
+        return \"\"\"
+List new episodes across tracked series.
 
-This command shows you WHAT'S NEW to watch, sorted by series score.
-Snoozed series are excluded by default.
+Usage: 
+  episodes                    Show all new episodes
+  episodes \"Dark\"             Show only Dark episodes
+  episodes \"Game\" --top 5     First 5 Game of Thrones episodes
 
-Usage: episodes [options]
+Arguments:
+  series_name             Optional: Filter by series name (partial match)
 
 Options:
   --all, -a               Include snoozed series
-  --min-score N, -m N     Only show episodes from series with score >= N
+  --min-score N, -m N     Only series with score >= N
   --top N, -t N           Limit to top N episodes
-  --verbose, -v           Show detailed information (IMDB IDs, air dates)
-  --debug, -d             Show fetching progress (for demos/debugging)
-
-Output Format:
-  Episodes are grouped by series, showing:
-  - Series name and score
-  - Episode code (S01E01)
-  - Episode title (if available)
+  --verbose, -v           Show IMDB IDs and air dates
+  --debug, -d             Show fetching progress
 
 Examples:
-  episodes                    Show all new episodes
-  episodes --min-score 8      Only high-rated series (8+)
-  episodes --top 5            Show top 5 priority episodes
-  episodes --all --verbose    Full details including snoozed
+  episodes                    All new episodes
+  episodes \"Dark\"             Only Dark series
+  episodes --min-score 8      Only 8+ rated series
+  episodes \"Game\" --top 10    Top 10 GoT episodes
 
 Related Commands:
   list      - Show all tracked series
