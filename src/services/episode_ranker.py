@@ -192,37 +192,33 @@ class EpisodeRanker:
         """
         self.logger.debug("Building prioritized watchlist...")
         
-        # Step 1: Get all series from database
-        # By default, exclude snoozed series (that's the whole point!)
+        # Pas 1: Ia toate seriile din baza de date
         all_series = self.db_manager.get_all_series(include_snoozed=include_snoozed)
         
         if not all_series:
             self.logger.debug("No series in database")
             return []
         
-        # Step 2: Filter by minimum score if specified
+        # Pas 2: Filtreaza dupa scor minim
         if min_score is not None:
             all_series = [s for s in all_series if s.score >= min_score]
-            self.logger.debug(f"After score filter (>={min_score}): {len(all_series)} series")
         
-        # Step 3: Collect new episodes from all series
+        # Pas 3: Colecteaza episoadele noi de la fiecare serie
         all_prioritized: List[PrioritizedEpisode] = []
         
         for series in all_series:
             try:
-                # Skip snoozed series (redundant if include_snoozed=False, but safe)
+                # Sari peste seriile snoozed
                 if series.snoozed and not include_snoozed:
                     continue
                 
-                self.logger.debug(f"Checking {series.name} for new episodes...")
-                
-                # Get new episodes from IMDB
+                # Ia episoadele noi de pe IMDB
                 new_episodes = self.scraper.get_new_episodes(
                     series.imdb_id,
                     series.last_episode
                 )
                 
-                # Convert to PrioritizedEpisode objects
+                # Converteste la obiecte PrioritizedEpisode
                 for ep in new_episodes:
                     prioritized = PrioritizedEpisode(
                         series_name=series.name,
@@ -234,26 +230,23 @@ class EpisodeRanker:
                         air_date=ep.air_date
                     )
                     all_prioritized.append(prioritized)
-                
-                self.logger.debug(f"Found {len(new_episodes)} new episodes for {series.name}")
+                self.logger.debug(f"Found {len(new_episodes)} episodes for {series.name}")
             
             except Exception as e:
-                # Don't let one series failure break the whole ranking
-                self.logger.error(f"Error fetching episodes for {series.name}: {e}")
+                # Nu lasa o eroare sa opreasca tot procesul
+                self.logger.error(f"Error fetching {series.name}: {e}")
                 continue
         
-        # Step 4: Sort by priority
-        # Key function returns tuple: (-score, season, episode)
-        # Negative score so higher scores come first (descending)
+        # Pas 4: Sorteaza dupa prioritate (scor descrescator, apoi episod crescator)
         all_prioritized.sort(
             key=lambda ep: (-ep.score, ep.season, ep.episode_number)
         )
         
-        # Step 5: Assign rank numbers
+        # Pas 5: Atribuie numere de rang
         for rank, ep in enumerate(all_prioritized, 1):
             ep.priority_rank = rank
         
-        # Step 6: Apply max_results limit if specified
+        # Pas 6: Aplica limita daca e specificata
         if max_results is not None:
             all_prioritized = all_prioritized[:max_results]
         
