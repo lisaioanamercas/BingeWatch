@@ -190,14 +190,14 @@ class EpisodeRanker:
         Returns:
             List of PrioritizedEpisode objects, sorted by priority
         """
-        self.logger.info("Building prioritized watchlist...")
+        self.logger.debug("Building prioritized watchlist...")
         
         # Step 1: Get all series from database
         # By default, exclude snoozed series (that's the whole point!)
         all_series = self.db_manager.get_all_series(include_snoozed=include_snoozed)
         
         if not all_series:
-            self.logger.info("No series in database")
+            self.logger.debug("No series in database")
             return []
         
         # Step 2: Filter by minimum score if specified
@@ -257,7 +257,7 @@ class EpisodeRanker:
         if max_results is not None:
             all_prioritized = all_prioritized[:max_results]
         
-        self.logger.info(f"Watchlist complete: {len(all_prioritized)} episodes to watch")
+        self.logger.debug(f"Watchlist complete: {len(all_prioritized)} episodes to watch")
         return all_prioritized
     
     def get_next_episode(self) -> Optional[PrioritizedEpisode]:

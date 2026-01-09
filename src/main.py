@@ -129,6 +129,7 @@ GETTING STARTED (do these first!)
 WHAT TO WATCH
 ─────────────────────────────────────
   episodes    New episodes across all series → episodes
+              Use --debug to show fetching progress
   watchlist   Prioritized by score → watchlist --top 10
 
 DISCOVER CONTENT

@@ -62,8 +62,14 @@ class EpisodesCommand(Command):
                 # Parse arguments
                 include_snoozed = '--all' in args or '-a' in args
                 verbose = '--verbose' in args or '-v' in args
+                debug_mode = '--debug' in args or '-d' in args
                 min_score = self._parse_int_arg(args, '--min-score', '-m')
                 top_n = self._parse_int_arg(args, '--top', '-t')
+                
+                # Enable verbose logging if debug mode
+                if debug_mode:
+                    from ..utils.logger import set_verbose
+                    set_verbose(True)
                 
                 # Get episodes from ranker
                 op.debug("Fetching prioritized watchlist...")
@@ -180,34 +186,44 @@ class EpisodesCommand(Command):
         lines.append("")
         
         # Group episodes by series for cleaner output
-        current_series = None
-        series_count = 0
+        series_episodes = {}
+        for ep in episodes:
+            if ep.series_name not in series_episodes:
+                series_episodes[ep.series_name] = {
+                    'score': ep.score,
+                    'imdb_id': ep.series_imdb_id,
+                    'episodes': []
+                }
+            series_episodes[ep.series_name]['episodes'].append(ep)
         
-        for idx, ep in enumerate(episodes, 1):
-            # Add series header when series changes
-            if ep.series_name != current_series:
-                if current_series is not None:
-                    lines.append("")  # Blank line between series
+        # Sort series by score (highest first)
+        sorted_series = sorted(
+            series_episodes.items(), 
+            key=lambda x: -x[1]['score']
+        )
+        
+        # Display each series
+        episode_counter = 1
+        for series_name, data in sorted_series:
+            lines.append(f"[{series_name}] Score: {data['score']}/10")
+            if verbose:
+                lines.append(f"   IMDB: {data['imdb_id']}")
+            
+            for ep in data['episodes']:
+                episode_line = f"   {episode_counter:3}. {ep.episode_code}"
                 
-                current_series = ep.series_name
-                series_count += 1
+                if ep.episode_title and ep.episode_title != "Unknown":
+                    episode_line += f" - {ep.episode_title}"
                 
-                # Series header with score
-                lines.append(f"[{ep.series_name}] Score: {ep.score}/10")
-                if verbose:
-                    lines.append(f"   IMDB: {ep.series_imdb_id}")
+                lines.append(episode_line)
+                
+                # Additional details in verbose mode
+                if verbose and ep.air_date:
+                    lines.append(f"        Aired: {ep.air_date}")
+                
+                episode_counter += 1
             
-            # Episode line
-            episode_line = f"   {idx:2}. {ep.episode_code}"
-            
-            if ep.episode_title and ep.episode_title != "Unknown":
-                episode_line += f" - {ep.episode_title}"
-            
-            lines.append(episode_line)
-            
-            # Additional details in verbose mode
-            if verbose and ep.air_date:
-                lines.append(f"       Aired: {ep.air_date}")
+            lines.append("")  # Blank line between series
         
         lines.append("")
         lines.append("─" * 60)
@@ -239,6 +255,7 @@ Options:
   --min-score N, -m N     Only show episodes from series with score >= N
   --top N, -t N           Limit to top N episodes
   --verbose, -v           Show detailed information (IMDB IDs, air dates)
+  --debug, -d             Show fetching progress (for demos/debugging)
 
 Output Format:
   Episodes are grouped by series, showing:

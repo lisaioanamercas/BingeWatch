@@ -447,7 +447,7 @@ class IMDBScraper(BaseScraper):
         max_empty_seasons = 2  # Allow 1 gap season before stopping
         empty_seasons = 0
         
-        self.logger.info(f"Fetching episodes for IMDB ID: {imdb_id}")
+        self.logger.debug(f"Fetching episodes for IMDB ID: {imdb_id}")
         
         while empty_seasons < max_empty_seasons:
             try:
@@ -464,7 +464,7 @@ class IMDBScraper(BaseScraper):
                 season_episodes = parser.episodes
                 
                 if season_episodes:
-                    self.logger.info(f"Found {len(season_episodes)} episodes in season {season}")
+                    self.logger.debug(f"Found {len(season_episodes)} episodes in season {season}")
                     
                     # Convert ParsedEpisodes to Episode model objects
                     for parsed_ep in season_episodes:
@@ -505,7 +505,7 @@ class IMDBScraper(BaseScraper):
         # Sort episodes by season and episode number
         all_episodes.sort()
         
-        self.logger.info(f"Total episodes found for {imdb_id}: {len(all_episodes)}")
+        self.logger.debug(f"Total episodes found for {imdb_id}: {len(all_episodes)}")
         return all_episodes
     
     def check_new_episodes(self, imdb_id: str, last_episode: str) -> List[str]:
@@ -573,7 +573,7 @@ class IMDBScraper(BaseScraper):
             if (episode.season, episode.episode) > (last_season, last_ep_num):
                 new_episodes.append(episode)
         
-        self.logger.info(
+        self.logger.debug(
             f"Found {len(new_episodes)} new episodes after {last_episode}"
         )
         
@@ -619,7 +619,7 @@ class IMDBScraper(BaseScraper):
         encoded_query = quote_plus(query)
         url = IMDB_SEARCH_URL.format(query=encoded_query)
         
-        self.logger.info(f"Searching IMDB for: {query}")
+        self.logger.debug(f"Searching IMDB for: {query}")
         self.logger.debug(f"Search URL: {url}")
         
         try:
@@ -630,7 +630,7 @@ class IMDBScraper(BaseScraper):
             parser.feed(html)
             
             results = parser.results[:max_results]
-            self.logger.info(f"Found {len(results)} series matching '{query}'")
+            self.logger.debug(f"Found {len(results)} series matching '{query}'")
             
             return results
             
