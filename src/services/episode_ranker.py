@@ -1,51 +1,28 @@
 """
-Episode Ranking Service - The Brain Behind "What Should I Watch?"
+Episode Ranking Service - Prioritizeaza episoadele dupa preferintele utilizatorului.
 
-This module implements Phase 3's core functionality: prioritizing episodes
-across all tracked series based on user preferences.
+DESIGN PATTERNS:
+================
+1. SERVICE LAYER - Izoleaza logica de business de UI si persistenta
+2. DATA TRANSFER OBJECT (DTO) - PrioritizedEpisode combina date din mai multe surse
+3. STRATEGY PATTERN - Algoritmul de sortare poate fi schimbat usor
 
-THE PROBLEM:
-============
-You have 5 series with new episodes. Which do you watch first?
-
-Without ranking:
-    - Breaking Bad: S03E01 (score: 9)
-    - The Office: S02E05 (score: 7)
-    - Game of Thrones: S01E02 (score: 10)
-    
-You'd have to mentally sort these. With ranking:
-    1. Game of Thrones S01E02 (score: 10) ← Watch this first!
-    2. Breaking Bad S03E01 (score: 9)
-    3. The Office S02E05 (score: 7)
-
-DESIGN DECISIONS:
+RESPONSABILITATI:
 =================
+- Colecteaza episoade noi de la toate seriile
+- Prioritizeaza dupa scor (descrescator) si episod (crescator)
+- Filtreaza dupa scor minim si status snooze
+- Returneaza o lista ordonata gata de afisare
 
-1. WHY A SEPARATE SERVICE?
-   - Separation of Concerns: Ranking logic is distinct from scraping and DB
-   - Testability: Can unit test ranking without network/database
-   - Reusability: Same ranking can be used by multiple commands
+ALGORITM RANKING:
+=================
+Primar: Scor serie (descrescator) - scor mai mare = prioritate mai mare
+Secundar: Sezon/Episod (crescator) - episoade mai vechi intai
 
-2. RANKING ALGORITHM:
-   Primary sort: Series score (descending) - higher score = watch first
-   Secondary sort: Episode code (ascending) - earlier episodes first
-   
-   This means for a score-10 series, you'll see S01E01 before S01E02.
-
-3. DATA STRUCTURE:
-   PrioritizedEpisode combines Episode data with Series metadata.
-   This allows displaying "Game of Thrones S01E02 (Score: 10/10)"
-   without needing to look up the series again.
-
-USAGE:
-======
-    ranker = EpisodeRanker(db_manager, scraper)
-    
-    # Get prioritized watchlist
-    watchlist = ranker.get_prioritized_watchlist()
-    
-    for item in watchlist:
-        print(f"{item.series_name} {item.episode_code} (Score: {item.score})")
+Exemplu rezultat:
+    1. [10] Game of Thrones S01E02
+    2. [9]  Breaking Bad S03E01
+    3. [7]  The Office S02E05
 """
 
 from dataclasses import dataclass

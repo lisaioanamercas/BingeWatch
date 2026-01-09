@@ -1,14 +1,19 @@
 """
-Enhanced Logging System for BingeWatch.
+Sistem de Logging pentru BingeWatch.
 
-This module provides:
-- Singleton logger with file and console handlers
-- Verbose/quiet mode support
-- Operation-specific logging with context
-- Structured logging for tracking operations
+DESIGN PATTERNS:
+================
+1. SINGLETON PATTERN - O singura instanta Logger la nivel de aplicatie
+2. CONTEXT MANAGER PATTERN - OperationLogger pentru operatii cu timing
+3. DECORATOR PATTERN - Moduri verbose/quiet modifica comportamentul
 
-Phase 6 Enhancement: Added detailed operation logging and verbosity control.
+RESPONSABILITATI:
+=================
+- Logger global cu handler-e pentru fisier si consola
+- Suport moduri verbose/quiet
+- Logging structurat pentru operatii cu context si timing
 """
+
 
 import logging
 import sys

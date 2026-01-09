@@ -1,62 +1,39 @@
 """
-Video Cache - Persistent Storage for Previously Found Videos.
+Video Cache - Stocare persistenta pentru videoclipurile gasite.
 
-This module handles storing and retrieving YouTube video findings
-to enable change detection (Phase 5 requirement).
+DESIGN PATTERNS:
+================
+1. REPOSITORY PATTERN - Abstractizeaza stocarea/regasirea datelor
+2. DATA TRANSFER OBJECT (DTO) - CachedVideo transfera date intre straturi
+3. LAZY INITIALIZATION - Cache-ul se incarca la primul acces
+4. SINGLETON BEHAVIOR - O singura instanta per cache file
 
-DESIGN PATTERNS USED:
-=====================
-1. Repository Pattern - Abstracts data storage/retrieval behind a clean API.
-   VideoCache acts as a repository for CachedVideo entities.
+RESPONSABILITATI:
+=================
+- Stocheaza ID-urile videoclipurilor gasite anterior
+- Compara rezultatele noi cu cache-ul existent
+- Returneaza doar videoclipuri NOI
+- Gestioneaza TTL si curatarea automata
 
-2. Data Transfer Object (DTO) - CachedVideo is a DTO that transfers video
-   data between the cache layer and business logic.
-
-3. Lazy Initialization - Cache is loaded on first access, not at import time.
-
-THE PROBLEM:
-============
-When you run 'trailers' twice for the same episode:
-  - First run: finds videos A, B, C
-  - Second run: finds videos B, C, D, E
-
-We want to notify ONLY about the NEW videos (D, E), not repeat B, C.
-
-SOLUTION:
-=========
-Store video IDs in a JSON cache file. On each search:
-1. Load previously found video IDs
-2. Compare new results against cache
-3. Return only NEW videos
-4. Update cache with all found videos
-
-CACHE STRUCTURE:
+STRUCTURA CACHE:
 ================
 {
     "Breaking Bad|S01E04": {
         "video_ids": ["abc123", "def456"],
         "last_checked": "2024-01-15T10:30:00",
-        "videos": [
-            {"video_id": "abc123", "title": "...", "found_at": "..."},
-            ...
-        ]
-    },
-    ...
+        "videos": [...]
+    }
 }
 
-The key is "{series_name}|{episode_code}" for episode-specific searches,
-or "{series_name}|general" for series-wide searches.
+Cheia: "{nume_serie}|{cod_episod}" sau "{nume_serie}|general"
 
-STORAGE LOCATION:
-=================
-data/video_cache.json (alongside the SQLite database)
-
-SMART CACHING FEATURES:
-=======================
-- TTL (Time-To-Live): Entries older than CACHE_TTL_DAYS are stale
-- Auto-pruning: Old entries can be automatically removed
-- Age tracking: Know when entries were last checked
+SMART CACHING:
+==============
+- TTL (Time-To-Live): Intrarile mai vechi de CACHE_TTL_DAYS sunt stale
+- Auto-pruning: Curatare automata a intrarilor vechi
+- Age tracking: Urmareste cand au fost verificate intrarile
 """
+
 
 import json
 from pathlib import Path

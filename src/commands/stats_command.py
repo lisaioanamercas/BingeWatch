@@ -1,22 +1,19 @@
 """
-Stats Command - Dashboard Statistics Display.
+Stats Command - Dashboard cu statistici pentru BingeWatch.
 
-Shows a quick overview of your BingeWatch data.
+DESIGN PATTERNS:
+================
+1. COMMAND PATTERN - Mosteneste din Command, incapsuleaza operatia de statistici
+2. FACADE PATTERN - Interfata simplificata pentru mai multe surse de date
 
-DESIGN PATTERNS USED:
-=====================
-1. Command Pattern - Inherits from Command base class, encapsulating
-   the stats operation as an object with execute() method.
-2. Facade Pattern - Provides a simplified interface to multiple
-   subsystems (database, cache, notifications).
-
-FEATURES:
-=========
-- Series count (active vs snoozed)
-- Video cache statistics
-- Top-rated series
-- Last activity timestamps
+RESPONSABILITATI:
+=================
+- Afiseaza numar serii (active/snoozed)
+- Statistici cache video (intrari, videoclipuri, vechime)
+- Top serii dupa scor
+- Actiuni rapide disponibile
 """
+
 
 from datetime import datetime
 from typing import Optional

@@ -1,39 +1,30 @@
 """
-Notification Service - Change Detection and User Alerts.
+Notification Service - Detectie schimbari si alerte utilizator.
 
-This module implements the notification workflow for Phase 5:
-1. Check for new YouTube videos across all tracked series
-2. Compare against previously found videos (via VideoCache)
-3. Generate user-friendly notifications for NEW discoveries
-4. Log all findings with timestamps
+DESIGN PATTERNS:
+================
+1. OBSERVER PATTERN - Monitorizeaza schimbarile si notifica utilizatorul
+2. FACADE PATTERN - Interfata simplificata pentru subsistemele complexe (cache, scraper)
+3. SERVICE LAYER - Izoleaza logica de notificari de restul aplicatiei
 
-THE WORKFLOW:
-=============
-User runs 'check' command:
-    → For each series with new episodes
-        → Search YouTube for trailers
-        → Compare against cache
-        → Collect NEW videos only
-    → Display consolidated notification
-    → Update cache
+RESPONSABILITATI:
+=================
+- Verifica videoclipuri noi pe YouTube pentru fiecare serie
+- Compara cu cache-ul pentru a detecta continut NOU
+- Genereaza notificari agregate (evita oboseala notificarilor)
+- Actualizeaza cache-ul dupa verificare
 
-NOTIFICATION PHILOSOPHY:
-========================
-The goal is to avoid "notification fatigue":
-- Only notify about NEW content, not repeated findings
-- Aggregate notifications (one summary, not one per video)
-- Allow silent check (cache update without output)
-
-LOGGING:
-========
-All discoveries are logged to the standard log file:
-- Timestamp of check
-- Which series/episodes were checked
-- How many new videos found
-- Video IDs for debugging
-
-This creates an audit trail for troubleshooting.
+FLUX DE LUCRU:
+==============
+1. Utilizator ruleaza 'check'
+2. Pentru fiecare serie cu episoade noi:
+   - Cauta trailere pe YouTube
+   - Compara cu cache-ul
+   - Colecteaza doar videoclipuri NOI
+3. Afiseaza notificare consolidata
+4. Actualizeaza cache-ul
 """
+
 
 from datetime import datetime
 from typing import List, Dict, Optional, Tuple

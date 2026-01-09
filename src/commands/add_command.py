@@ -1,10 +1,19 @@
 """
-Add command implementation.
-Handles adding new series to the database.
+Add Command - Adauga o serie noua pentru urmarire.
 
-Phase 6 Enhancement: Detailed operation logging.
-Phase 7 Enhancement: Auto IMDB lookup by series name.
+DESIGN PATTERNS:
+================
+1. COMMAND PATTERN - Incapsuleaza operatia de adaugare
+2. TEMPLATE METHOD - Urmeaza fluxul standard Command
+
+RESPONSABILITATI:
+=================
+- Valideaza input-ul utilizatorului (nume, scor, IMDB ID)
+- Cauta automat pe IMDB daca nu e specificat ID-ul
+- Detecteaza duplicate si avertizeaza utilizatorul
+- Adauga seria in baza de date
 """
+
 
 from datetime import datetime
 

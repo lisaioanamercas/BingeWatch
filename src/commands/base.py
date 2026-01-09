@@ -1,23 +1,20 @@
 """
-Base command interface using Command pattern.
-All commands inherit from this abstract base class.
+Clasa de baza pentru comenzi - Implementeaza Command Pattern.
 
-DESIGN PATTERNS USED:
-=====================
-1. Command Pattern - Encapsulates a request as an object (execute method).
-   Each command (AddCommand, DeleteCommand, etc.) is a concrete implementation.
-   Benefits: decouples sender from receiver, supports undo, logging, queuing.
+DESIGN PATTERNS:
+================
+1. COMMAND PATTERN - Incapsuleaza o cerere ca obiect (metoda execute)
+2. TEMPLATE METHOD PATTERN - Defineste scheletul algoritmului, subclasele suprascriu execute()
+3. STRATEGY PATTERN - Formatarea output-ului poate fi schimbata (JSON, text, etc.)
 
-2. Template Method Pattern - The Command class defines the algorithm skeleton:
-   - execute() is the abstract template method
-   - Helper methods (success_msg, error_msg, log_op) are the steps
-   Subclasses override execute() but reuse the helpers.
-
-3. Strategy Pattern (for output formatting) - success_msg, error_msg, etc.
-   could be swapped for different output strategies (JSON, plain text, etc.)
-
-Phase 6 Enhancement: Added output formatting helpers and operation logging.
+RESPONSABILITATI:
+=================
+- Interfata abstracta pentru toate comenzile
+- Metode helper pentru formatare output (success_msg, error_msg)
+- Logging operatii cu context
+- Rezolvare serii dupa nume sau IMDB ID
 """
+
 
 from abc import ABC, abstractmethod
 from ..database.db_manager import DBManager

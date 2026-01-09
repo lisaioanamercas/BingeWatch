@@ -1,40 +1,28 @@
 """
-IMDB Scraper Implementation - The Heart of Episode Detection.
+IMDB Scraper - Extrage informatii despre episoade de pe IMDB.
 
-This module is responsible for:
-1. Fetching episode pages from IMDB
-2. Parsing the HTML to extract episode information
-3. Comparing episodes against user's last watched to find new ones
+DESIGN PATTERNS:
+================
+1. STATE MACHINE PATTERN - Parserul HTML urmeaza stari: IDLE -> IN_EPISODE -> IN_TITLE
+2. TEMPLATE METHOD - Clasele parser mostenesc HTMLParser si suprascriu handle_*
+3. ADAPTER PATTERN - Converteste HTML IMDB la obiecte Episode
 
-TECHNICAL ARCHITECTURE:
-=======================
-The scraper uses a STATE MACHINE pattern for HTML parsing. Here's why:
+RESPONSABILITATI:
+=================
+- Fetch-uieste paginile de episoade de pe IMDB
+- Parseaza HTML pentru a extrage informatii episoade
+- Compara episoadele cu ultimul vizionat pentru a gasi cele noi
+- Cauta serii dupa nume
 
-IMDB's HTML is complex and nested. A simple regex approach would be fragile:
-    BAD:  re.search(r'S(\\d+).E(\\d+)', html)  # Matches too much!
-    
-Instead, we track WHERE we are in the document structure:
-    "I'm inside an episode container → I'm inside the title → This text is the episode code"
+ARHITECTURA:
+============
+IMDBEpisodeParser - Parseaza paginile de episoade (state machine)
+IMDBSearchParser - Parseaza rezultatele cautarii
+IMDBScraper - Orchestreaza fetch + parse
 
-STATE MACHINE STATES:
-    IDLE → IN_EPISODE → IN_TITLE → (capture data) → back to IDLE
-
-This makes the parser resilient to minor HTML changes while staying accurate.
-
-IMDB URL PATTERNS:
-==================
-Episode list URL: https://www.imdb.com/title/tt0903747/episodes?season=1
-                                              ↑ IMDB ID        ↑ Season
-
-The scraper iterates through seasons (1, 2, 3...) until no episodes are found.
-
-WHY HTMLParser OVER BEAUTIFUL SOUP?
-===================================
-BeautifulSoup is more ergonomic, but:
-1. Project requirement: stdlib only
-2. HTMLParser is surprisingly capable
-3. Forces us to understand HTML structure deeply (better for maintenance)
+URL IMDB: https://www.imdb.com/title/{imdb_id}/episodes?season={season}
 """
+
 
 import re
 from html.parser import HTMLParser

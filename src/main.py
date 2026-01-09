@@ -1,24 +1,20 @@
 """
-BingeWatch - TV Series Tracker
-Main entry point and CLI orchestration.
+BingeWatch - TV Series Tracker - Punct de intrare principal CLI.
 
-DESIGN PATTERNS USED:
-=====================
-1. Factory Pattern - CommandFactory creates command instances without exposing
-   the instantiation logic. Clients request commands by name.
+DESIGN PATTERNS:
+================
+1. FACTORY PATTERN - CommandFactory creeaza instante de comenzi fara a expune logica
+2. COMMAND PATTERN - Fiecare actiune (add, delete, etc) este incapsulata ca obiect Command
+3. FACADE PATTERN - BingeWatchCLI ofera interfata simplificata pentru subsisteme complexe
+4. REGISTRY PATTERN - Comenzile sunt inregistrate intr-un dictionar pentru lookup dinamic
 
-2. Command Pattern - Each user action (add, delete, etc.) is encapsulated
-   as a Command object with an execute() method.
-
-3. Facade Pattern - BingeWatchCLI provides a simplified interface to the
-   complex subsystems (database, commands, parsing).
-
-4. Registry Pattern - Commands are registered in a dictionary for
-   dynamic lookup by name, supporting aliases.
-
-Phase 6 Enhancement: Added verbose/quiet modes and episodes command.
-Phase 7 Enhancement: Added stats command and duplicate detection.
+COMPONENTE:
+===========
+- CommandFactory: Creeaza si gestioneaza instante de comenzi
+- BingeWatchCLI: Orchestreaza parsarea si executia comenzilor
+- Interactive mode: REPL pentru utilizare continua
 """
+
 
 import sys
 from typing import Dict

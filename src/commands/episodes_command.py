@@ -1,27 +1,19 @@
 """
-Episodes Command - Show All New Episodes Across All Series.
+Episodes Command - Afiseaza toate episoadele noi.
 
-This command is the primary Phase 6 output for listing new episodes.
-It provides a consolidated view of all new episodes excluding snoozed series,
-sorted by score for easy prioritization.
+DESIGN PATTERNS:
+================
+1. COMMAND PATTERN - Mosteneste din Command, implementeaza execute()
+2. DECORATOR PATTERN - Flag-urile (--debug, --verbose) modifica comportamentul
 
-DIFFERENCE FROM OTHER COMMANDS:
-================================
-- 'list': Shows all tracked series with optional episode checking
-- 'watchlist': Shows prioritized episodes (ranked by score)
-- 'episodes': Shows ALL new episodes in a clean, formatted list
-
-This command is designed for users who want to see:
-"What new episodes are available across ALL my shows?"
-
-USAGE:
-======
-    episodes                    List all new episodes (exclude snoozed)
-    episodes --all              Include snoozed series
-    episodes --min-score 7      Only shows from series with score >= 7
-    episodes --top 10           Show only top 10 episodes
-    episodes --verbose          Show detailed information
+RESPONSABILITATI:
+=================
+- Listeaza episoade noi de la toate seriile
+- Grupeaza dupa serie pentru afisare curata
+- Filtreaza dupa scor minim si status snooze
+- Suporta mod debug pentru prezentari
 """
+
 
 from typing import Optional, List
 from datetime import datetime
