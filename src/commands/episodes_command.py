@@ -273,32 +273,25 @@ class EpisodesCommand(Command):
     
     def get_help(self) -> str:
         """Return help text for episodes command."""
-        return \"\"\"
-List new episodes across tracked series.
+        help_text = (
+            "List new episodes across tracked series.\n\n"
+            "Usage:\n"
+            "  episodes                    Show all new episodes\n"
+            '  episodes "Dark"             Show only Dark episodes\n'
+            '  episodes "Game" --top 5     First 5 Game of Thrones episodes\n\n'
+            "Arguments:\n"
+            "  series_name             Optional: Filter by series name (partial match)\n\n"
+            "Options:\n"
+            "  --all, -a               Include snoozed series\n"
+            "  --min-score N, -m N     Only series with score >= N\n"
+            "  --top N, -t N           Limit to top N episodes\n"
+            "  --verbose, -v           Show IMDB IDs and air dates\n"
+            "  --debug, -d             Show fetching progress\n\n"
+            "Examples:\n"
+            "  episodes                    All new episodes\n"
+            '  episodes "Dark"             Only Dark series\n'
+            "  episodes --min-score 8      Only 8+ rated series\n"
+            '  episodes "Game" --top 10    Top 10 GoT episodes\n'
+        )
+        return help_text
 
-Usage: 
-  episodes                    Show all new episodes
-  episodes \"Dark\"             Show only Dark episodes
-  episodes \"Game\" --top 5     First 5 Game of Thrones episodes
-
-Arguments:
-  series_name             Optional: Filter by series name (partial match)
-
-Options:
-  --all, -a               Include snoozed series
-  --min-score N, -m N     Only series with score >= N
-  --top N, -t N           Limit to top N episodes
-  --verbose, -v           Show IMDB IDs and air dates
-  --debug, -d             Show fetching progress
-
-Examples:
-  episodes                    All new episodes
-  episodes \"Dark\"             Only Dark series
-  episodes --min-score 8      Only 8+ rated series
-  episodes \"Game\" --top 10    Top 10 GoT episodes
-
-Related Commands:
-  list      - Show all tracked series
-  watchlist - Prioritized episode recommendations
-  check     - Scan for new YouTube videos
-        """
