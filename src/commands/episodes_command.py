@@ -193,10 +193,9 @@ class EpisodesCommand(Command):
                 series_count += 1
                 
                 # Series header with score
-                score_stars = "★" * ep.series_score + "☆" * (10 - ep.series_score)
-                lines.append(f"【{ep.series_name}】 Score: {ep.series_score}/10")
+                lines.append(f"[{ep.series_name}] Score: {ep.score}/10")
                 if verbose:
-                    lines.append(f"   IMDB: {ep.imdb_id}")
+                    lines.append(f"   IMDB: {ep.series_imdb_id}")
             
             # Episode line
             episode_line = f"   {idx:2}. {ep.episode_code}"

@@ -260,7 +260,7 @@ class AddCommand(Command):
     
     def info_msg(self, msg: str) -> str:
         """Format an info message."""
-        return f"ℹ {msg}"
+        return f"[INFO] {msg}"
     
     def get_help(self):
         """Return help text for add command."""

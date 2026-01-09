@@ -140,14 +140,14 @@ class CheckCommand(Command):
         )
         
         if not notifications:
-            lines.append("✓ No new videos found since last check.")
+            lines.append("[OK] No new videos found since last check.")
             lines.append("")
             lines.append("Tip: Videos are cached after first discovery.")
             lines.append("     Run 'check --clear' to reset the cache.")
         else:
             # Count totals
             total_new = sum(n.count for n in notifications)
-            lines.append(f"🎬 Found {total_new} new video(s)!\n")
+            lines.append(f"Found {total_new} new video(s)!\n")
             
             # Group by series for cleaner output
             current_series = None
@@ -157,7 +157,7 @@ class CheckCommand(Command):
                 if notif.series_name != current_series:
                     if current_series is not None:
                         lines.append("")  # Blank between series
-                    lines.append(f"📺 {notif.series_name}")
+                    lines.append(f"[{notif.series_name}]")
                     lines.append("─" * 40)
                     current_series = notif.series_name
                 
@@ -197,11 +197,11 @@ class CheckCommand(Command):
         # Get series info
         series = self.db_manager.get_series(imdb_id)
         if not series:
-            return f"✗ Series with IMDB ID '{imdb_id}' not found.\n  Use 'add' command first."
+            return f"[ERROR] Series with IMDB ID '{imdb_id}' not found.\n  Use 'add' command first."
         
         lines = [
             "═" * 60,
-            f"🔔 CHECKING: {series.name}",
+            f"CHECKING: {series.name}",
             "═" * 60,
             ""
         ]
@@ -209,10 +209,10 @@ class CheckCommand(Command):
         notifications = self.notification_service.check_series(imdb_id)
         
         if not notifications:
-            lines.append("✓ No new videos found for this series.")
+            lines.append("[OK] No new videos found for this series.")
         else:
             total_new = sum(n.count for n in notifications)
-            lines.append(f"🎬 Found {total_new} new video(s)!\n")
+            lines.append(f"Found {total_new} new video(s)!\n")
             
             for notif in notifications:
                 if notif.episode_code != 'general':
@@ -234,7 +234,7 @@ class CheckCommand(Command):
         
         lines = [
             "═" * 60,
-            "📊 VIDEO CACHE STATISTICS",
+            "VIDEO CACHE STATISTICS",
             "═" * 60,
             "",
             f"  Cache entries: {stats['total_entries']}",
@@ -255,11 +255,11 @@ class CheckCommand(Command):
             series = self.db_manager.get_series(series_id)
             if series:
                 self.notification_service.clear_cache(series.name)
-                return f"✓ Cleared cache for {series.name}"
-            return f"✗ Series {series_id} not found"
+                return f"[OK] Cleared cache for {series.name}"
+            return f"[ERROR] Series {series_id} not found"
         
         self.notification_service.clear_cache()
-        return "✓ Video cache cleared. Next check will treat all videos as new."
+        return "[OK] Video cache cleared. Next check will treat all videos as new."
     
     def get_help(self):
         """Return help text for check command."""

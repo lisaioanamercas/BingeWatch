@@ -269,7 +269,7 @@ Type 'exit' to quit.
                 print("\n\nInterrupted. Use 'exit' to quit.")
             
             except EOFError:
-                print("\nGoodbye! Happy watching! 📺")
+                print("\nGoodbye! Happy watching!")
                 break
             
             except Exception as e:
