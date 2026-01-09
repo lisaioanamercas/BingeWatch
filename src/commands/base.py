@@ -2,12 +2,27 @@
 Base command interface using Command pattern.
 All commands inherit from this abstract base class.
 
+DESIGN PATTERNS USED:
+=====================
+1. Command Pattern - Encapsulates a request as an object (execute method).
+   Each command (AddCommand, DeleteCommand, etc.) is a concrete implementation.
+   Benefits: decouples sender from receiver, supports undo, logging, queuing.
+
+2. Template Method Pattern - The Command class defines the algorithm skeleton:
+   - execute() is the abstract template method
+   - Helper methods (success_msg, error_msg, log_op) are the steps
+   Subclasses override execute() but reuse the helpers.
+
+3. Strategy Pattern (for output formatting) - success_msg, error_msg, etc.
+   could be swapped for different output strategies (JSON, plain text, etc.)
+
 Phase 6 Enhancement: Added output formatting helpers and operation logging.
 """
 
 from abc import ABC, abstractmethod
 from ..database.db_manager import DBManager
 from ..utils.logger import get_logger, log_operation, is_verbose
+
 
 
 class Command(ABC):

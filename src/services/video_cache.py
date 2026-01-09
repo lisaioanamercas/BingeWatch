@@ -4,6 +4,16 @@ Video Cache - Persistent Storage for Previously Found Videos.
 This module handles storing and retrieving YouTube video findings
 to enable change detection (Phase 5 requirement).
 
+DESIGN PATTERNS USED:
+=====================
+1. Repository Pattern - Abstracts data storage/retrieval behind a clean API.
+   VideoCache acts as a repository for CachedVideo entities.
+
+2. Data Transfer Object (DTO) - CachedVideo is a DTO that transfers video
+   data between the cache layer and business logic.
+
+3. Lazy Initialization - Cache is loaded on first access, not at import time.
+
 THE PROBLEM:
 ============
 When you run 'trailers' twice for the same episode:
@@ -40,15 +50,21 @@ or "{series_name}|general" for series-wide searches.
 STORAGE LOCATION:
 =================
 data/video_cache.json (alongside the SQLite database)
+
+SMART CACHING FEATURES:
+=======================
+- TTL (Time-To-Live): Entries older than CACHE_TTL_DAYS are stale
+- Auto-pruning: Old entries can be automatically removed
+- Age tracking: Know when entries were last checked
 """
 
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Set
 from dataclasses import dataclass, asdict
 
-from ..config.settings import DB_DIR
+from ..config.settings import DB_DIR, CACHE_TTL_DAYS, CACHE_AUTO_PRUNE, CACHE_PRUNE_THRESHOLD
 from ..utils.logger import get_logger
 from ..scrapers.youtube_scraper import VideoResult
 
@@ -348,4 +364,150 @@ class VideoCache:
             'total_entries': total_keys,
             'total_videos': total_videos,
             'cache_path': str(self.cache_path)
+        }
+    
+    # ==========================================================================
+    # Smart Cache Methods (TTL, Pruning, Age Tracking)
+    # ==========================================================================
+    
+    def is_entry_stale(self, key: str, ttl_days: Optional[int] = None) -> bool:
+        """
+        Check if a cache entry is stale (older than TTL).
+        
+        Args:
+            key: Cache key to check
+            ttl_days: Days before entry is stale (default from settings)
+            
+        Returns:
+            True if entry is stale or doesn't exist
+        """
+        ttl = ttl_days if ttl_days is not None else CACHE_TTL_DAYS
+        entry = self._cache.get(key)
+        
+        if not entry:
+            return True
+        
+        last_checked = entry.get('last_checked')
+        if not last_checked:
+            return True
+        
+        try:
+            check_time = datetime.fromisoformat(last_checked)
+            cutoff = datetime.now() - timedelta(days=ttl)
+            return check_time < cutoff
+        except (ValueError, TypeError):
+            return True
+    
+    def get_entry_age(self, key: str) -> Optional[timedelta]:
+        """
+        Get age of a cache entry.
+        
+        Args:
+            key: Cache key
+            
+        Returns:
+            timedelta since last check, or None if not found
+        """
+        entry = self._cache.get(key)
+        if not entry or 'last_checked' not in entry:
+            return None
+        
+        try:
+            check_time = datetime.fromisoformat(entry['last_checked'])
+            return datetime.now() - check_time
+        except (ValueError, TypeError):
+            return None
+    
+    def count_stale_entries(self, days: Optional[int] = None) -> int:
+        """
+        Count how many cache entries are stale.
+        
+        Args:
+            days: Days before entry is stale (default from settings)
+            
+        Returns:
+            Number of stale entries
+        """
+        ttl = days if days is not None else CACHE_TTL_DAYS
+        return sum(1 for key in self._cache if self.is_entry_stale(key, ttl))
+    
+    def prune_old_entries(self, days: Optional[int] = None) -> int:
+        """
+        Remove cache entries older than specified days.
+        
+        Args:
+            days: Remove entries older than this (default from settings)
+            
+        Returns:
+            Number of entries removed
+        """
+        ttl = days if days is not None else CACHE_TTL_DAYS
+        keys_to_remove = [
+            key for key in self._cache
+            if self.is_entry_stale(key, ttl)
+        ]
+        
+        for key in keys_to_remove:
+            del self._cache[key]
+        
+        if keys_to_remove:
+            self._save_cache()
+            self.logger.info(f"Pruned {len(keys_to_remove)} stale cache entries")
+        
+        return len(keys_to_remove)
+    
+    def auto_prune_if_needed(self) -> int:
+        """
+        Automatically prune if cache is large and has stale entries.
+        
+        Only prunes if:
+        1. CACHE_AUTO_PRUNE is enabled
+        2. Cache has more than CACHE_PRUNE_THRESHOLD entries
+        
+        Returns:
+            Number of entries pruned (0 if pruning not triggered)
+        """
+        if not CACHE_AUTO_PRUNE:
+            return 0
+        
+        if len(self._cache) < CACHE_PRUNE_THRESHOLD:
+            return 0
+        
+        stale_count = self.count_stale_entries()
+        if stale_count > 0:
+            self.logger.debug(f"Auto-pruning {stale_count} stale entries...")
+            return self.prune_old_entries()
+        
+        return 0
+    
+    def get_freshness_summary(self) -> dict:
+        """
+        Get a summary of cache freshness.
+        
+        Returns:
+            Dict with freshness stats
+        """
+        if not self._cache:
+            return {
+                'total': 0,
+                'fresh': 0,
+                'stale': 0,
+                'oldest_days': None,
+                'newest_days': None
+            }
+        
+        ages = []
+        for key in self._cache:
+            age = self.get_entry_age(key)
+            if age:
+                ages.append(age.total_seconds() / 86400)  # Convert to days
+        
+        stale_count = self.count_stale_entries()
+        
+        return {
+            'total': len(self._cache),
+            'fresh': len(self._cache) - stale_count,
+            'stale': stale_count,
+            'oldest_days': max(ages) if ages else None,
+            'newest_days': min(ages) if ages else None
         }

@@ -2,7 +2,22 @@
 BingeWatch - TV Series Tracker
 Main entry point and CLI orchestration.
 
+DESIGN PATTERNS USED:
+=====================
+1. Factory Pattern - CommandFactory creates command instances without exposing
+   the instantiation logic. Clients request commands by name.
+
+2. Command Pattern - Each user action (add, delete, etc.) is encapsulated
+   as a Command object with an execute() method.
+
+3. Facade Pattern - BingeWatchCLI provides a simplified interface to the
+   complex subsystems (database, commands, parsing).
+
+4. Registry Pattern - Commands are registered in a dictionary for
+   dynamic lookup by name, supporting aliases.
+
 Phase 6 Enhancement: Added verbose/quiet modes and episodes command.
+Phase 7 Enhancement: Added stats command and duplicate detection.
 """
 
 import sys
@@ -18,6 +33,7 @@ from .commands.watchlist_command import WatchlistCommand
 from .commands.trailers_command import TrailersCommand
 from .commands.check_command import CheckCommand
 from .commands.episodes_command import EpisodesCommand
+from .commands.stats_command import StatsCommand
 from .utils.logger import get_logger, set_verbose, set_quiet
 
 
@@ -49,6 +65,8 @@ class CommandFactory:
             'check': CheckCommand(self.db_manager),
             'episodes': EpisodesCommand(self.db_manager),
             'ep': EpisodesCommand(self.db_manager),  # Alias
+            'stats': StatsCommand(self.db_manager),
+            'st': StatsCommand(self.db_manager),  # Alias
         }
     
     def get_command(self, command_name: str) -> Command:

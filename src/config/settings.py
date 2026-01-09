@@ -19,6 +19,11 @@ LOG_PATH = LOG_DIR / "bingewatch.log"
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 LOG_LEVEL = "INFO"
 
+# Cache settings
+CACHE_TTL_DAYS = 30          # Entries older than this are considered stale
+CACHE_AUTO_PRUNE = True      # Auto-cleanup stale entries on load
+CACHE_PRUNE_THRESHOLD = 100  # Only prune if more than this many entries
+
 # IMDB settings
 IMDB_BASE_URL = "https://www.imdb.com"
 IMDB_EPISODE_PATH = "/title/{}/episodes"

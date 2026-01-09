@@ -205,6 +205,31 @@ class AddCommand(Command):
         Returns:
             str: Success message
         """
+        # Check for duplicates (by IMDB ID and by similar name)
+        existing_by_id = self.db_manager.find_by_imdb_id(imdb_id)
+        if existing_by_id:
+            op.debug(f"Series with IMDB ID {imdb_id} already exists")
+            return (
+                self.error_msg(f"Series already tracked!") + "\n\n"
+                f"  Name:     {existing_by_id.name}\n"
+                f"  IMDB ID:  {existing_by_id.imdb_id}\n"
+                f"  Score:    {existing_by_id.score}/10\n\n"
+                "Use 'update' to modify this series."
+            )
+        
+        # Check for similar names (duplicate detection)
+        similar_series = self.db_manager.find_similar_by_name(name)
+        duplicate_warning = ""
+        if similar_series:
+            op.debug(f"Found {len(similar_series)} similar series")
+            duplicate_warning = (
+                "\n" + self.warning_msg("Similar series already tracked:") + "\n"
+            )
+            for s in similar_series[:3]:  # Limit to 3 suggestions
+                snoozed = " [SNOOZED]" if s.snoozed else ""
+                duplicate_warning += f"  • {s.name} ({s.imdb_id}){snoozed}\n"
+            duplicate_warning += "\n"
+        
         # Create series object
         series = Series(
             name=name,
@@ -226,8 +251,9 @@ class AddCommand(Command):
             self.success_msg("Successfully added series:") + "\n"
             f"  Name:     {name}\n"
             f"  IMDB ID:  {imdb_id}\n"
-            f"  Score:    {score}/10\n\n"
-            "Next steps:\n"
+            f"  Score:    {score}/10\n"
+            + duplicate_warning +
+            "\nNext steps:\n"
             f"  • Use 'episodes' to see new episodes\n"
             f"  • Use 'update episode {imdb_id} S01E01' to mark watched"
         )

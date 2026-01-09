@@ -11,6 +11,7 @@ from .watchlist_command import WatchlistCommand
 from .trailers_command import TrailersCommand
 from .check_command import CheckCommand
 from .episodes_command import EpisodesCommand
+from .stats_command import StatsCommand
 
 __all__ = [
     'Command',
@@ -22,4 +23,5 @@ __all__ = [
     'TrailersCommand',
     'CheckCommand',
     'EpisodesCommand',
+    'StatsCommand',
 ]

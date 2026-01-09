@@ -1,6 +1,24 @@
 """
 Database manager using Repository pattern.
 Handles all database operations for series data.
+
+DESIGN PATTERNS USED:
+=====================
+1. Repository Pattern - Abstracts data access logic behind a clean API.
+   DBManager is the repository for Series entities, hiding SQLite details.
+
+2. Context Manager Pattern - _get_connection() uses Python's contextmanager
+   to ensure proper resource cleanup (connection closing).
+
+3. Data Mapper Pattern - Series.from_db_row() maps database rows to domain
+   objects, separating persistence from business logic.
+
+KEY RESPONSIBILITIES:
+====================
+- CRUD operations for Series entities
+- Connection lifecycle management
+- Query building and execution
+- Duplicate/similarity detection
 """
 
 import sqlite3
@@ -295,3 +313,68 @@ class DBManager:
         except Exception as e:
             self.logger.error(f"Error retrieving all series: {e}")
             raise
+    
+    def find_similar_by_name(self, name: str, threshold: float = 0.6) -> List[Series]:
+        """
+        Find series with similar names for duplicate detection.
+        
+        Uses fuzzy string matching to identify potential duplicates.
+        
+        Args:
+            name: Name to search for
+            threshold: Similarity threshold (0.0-1.0, default 0.6)
+            
+        Returns:
+            List of Series that match above threshold
+        """
+        all_series = self.get_all_series(include_snoozed=True)
+        similar = []
+        
+        name_lower = name.lower().strip()
+        name_words = set(name_lower.split())
+        
+        for series in all_series:
+            series_name_lower = series.name.lower().strip()
+            series_words = set(series_name_lower.split())
+            
+            # Exact match
+            if name_lower == series_name_lower:
+                similar.append(series)
+                continue
+            
+            # Check if one name contains the other
+            if name_lower in series_name_lower or series_name_lower in name_lower:
+                similar.append(series)
+                continue
+            
+            # Word overlap (Jaccard similarity)
+            if name_words and series_words:
+                intersection = len(name_words & series_words)
+                union = len(name_words | series_words)
+                similarity = intersection / union if union > 0 else 0
+                
+                if similarity >= threshold:
+                    similar.append(series)
+                    continue
+            
+            # Character-based similarity for short names
+            if len(name_lower) <= 10 or len(series_name_lower) <= 10:
+                # Simple ratio: common chars / max length
+                common = sum(1 for c in name_lower if c in series_name_lower)
+                max_len = max(len(name_lower), len(series_name_lower))
+                if max_len > 0 and common / max_len >= threshold:
+                    similar.append(series)
+        
+        return similar
+    
+    def find_by_imdb_id(self, imdb_id: str) -> Optional[Series]:
+        """
+        Check if a series with given IMDB ID exists.
+        
+        Args:
+            imdb_id: IMDB ID to check
+            
+        Returns:
+            Series if found, None otherwise
+        """
+        return self.get_series(imdb_id)
